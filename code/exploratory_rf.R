@@ -55,5 +55,51 @@ fit = randomForest(Juv.km ~ STRM_ORDER + StrmSlope +
 saveRDS(fit, "output/rf_output.rds")
 varImpPlot(fit)
 
-for(i in 1:length(fit)) print(sqrt(mean((test$Juv.km[indx]-pred[indx,i])^2)))
+# Repeat the grid search -- but this time include spatial variables
 
+# find model with lowest out of sample rmse
+grid_search$rmse = 0
+for(i in 1:nrow(grid_search)) {
+  fit = randomForest(Juv.km ~ STRM_ORDER + StrmSlope + 
+                       MaxGradD + 
+                       WidthM +
+                       OUT_DIST + 
+                       CLASS_Rank + 
+                       StrmPow + 
+                       MAnnSed + 
+                       Barriers + 
+                       SolMean + 
+                       W3Dppt + 
+                       SprPpt + 
+                       IP_COHO + 
+                       UTM_E + 
+                       UTM_N, 
+                     mtry = grid_search$mtry[i],
+                     ntree = grid_search$ntree[i],
+                     data=train)
+  pred = predict(fit, test)
+  grid_search$rmse[i] = sqrt(mean((pred - test$Juv.km)^2))
+  
+}
+
+indx = which.min(grid_search$rmse)
+fit = randomForest(Juv.km ~ STRM_ORDER + StrmSlope + 
+                     MaxGradD + 
+                     WidthM +
+                     OUT_DIST + 
+                     CLASS_Rank + 
+                     StrmPow + 
+                     MAnnSed + 
+                     Barriers + 
+                     SolMean + 
+                     W3Dppt + 
+                     SprPpt + 
+                     IP_COHO + 
+                     UTM_E + 
+                     UTM_N, 
+                   mtry = grid_search$mtry[indx],
+                   ntree = grid_search$ntree[indx],
+                   data=train)
+# re-fit best model
+saveRDS(fit, "output/rf_spatial_output.rds")
+varImpPlot(fit)
