@@ -102,4 +102,26 @@ fit = randomForest(Juv.km ~ STRM_ORDER + StrmSlope +
                    data=train)
 # re-fit best model
 saveRDS(fit, "output/rf_spatial_output.rds")
-varImpPlot(fit)
+
+fit = readRDS("output/rf_spatial_output.rds")
+#varImpPlot(fit)
+library(randomForestSRC)
+fit = rfsrc(Juv.km ~ STRM_ORDER + StrmSlope + 
+              MaxGradD + 
+              WidthM +
+              OUT_DIST + 
+              CLASS_Rank + 
+              StrmPow + 
+              MAnnSed + 
+              Barriers + 
+              SolMean + 
+              W3Dppt + 
+              SprPpt + 
+              IP_COHO + 
+              UTM_E + 
+              UTM_N, 
+            mtry = fit$mtry,
+            ntree = fit$ntree,
+            data=train)
+# find interactions
+int = find.interaction(fit)
