@@ -2,6 +2,7 @@ library(randomForest)
 library(dplyr)
 
 d = read.csv("JuvData.csv")
+d = dplyr::filter(d, !is.na(MWMT_Index))
 d$STRM_ORDER = as.factor(d$STRM_ORDER)
 d$CLASS_Rank = as.factor(d$CLASS_Rank)
 
@@ -45,3 +46,8 @@ for(i in 1:nrow(grid_search)) {
 
 saveRDS(grid_search,paste0("output/rf_",n_years_ahead,"yr.rds"))
 
+dplyr::group_by(grid_search,mtry,ntree) %>% 
+  dplyr::summarize(mean_rmse=mean(rmse)) %>% 
+  dplyr::arrange(mean_rmse)
+# for 1 step ahead, best model is mtry=3 / ntree = 900, and rmse = 350.2042
+# for 2 step ahead, best model is mtry=3 / ntree = 600, and rmse = 349.9797
