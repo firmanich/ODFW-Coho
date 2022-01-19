@@ -46,7 +46,8 @@ gam.check(fit[[4]])
 d = read.csv("../JuvData.csv")
 d$PopGrp = as.factor(d$PopGrp)
 train = dplyr::filter(d, JuvYr < max(d$JuvYr))
-test = dplyr::filter(d, JuvYr == max(d$JuvYr))
+test = dplyr::filter(d, JuvYr == max(d$JuvYr),
+                     STRM_ORDER %in% unique(train$STRM_ORDER))
 
 pred = predict(fit[[4]], test)
 plot(test$Juv.km,exp(pred), xlab="Observed", ylab="Predicted")

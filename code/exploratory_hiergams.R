@@ -44,9 +44,9 @@ fit[[4]] = gam(Juv.km ~ -1 + as.factor(STRM_ORDER) + s(CLASS_Rank,k=3)+
                  #s(MAnnSed,k=4) + 
                  s(Barriers,k=4) + 
                  s(SolMean,k=4) + 
-                 s(MWMT_Index,k=4) + 
-                 s(W3Dppt,k=4) + 
-                 #s(SprPpt,k=4) + 
+                 s(MWMT_Index,k=4) + # def include
+                 s(W3Dppt,k=4) + # def include
+                 s(SprPpt,k=4) + # def include
                  s(IP_COHO,k=4) +
                  s(PopGrp,bs="re"), 
                data=train, family = "tw")
