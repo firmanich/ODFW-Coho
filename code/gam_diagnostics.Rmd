@@ -1,0 +1,83 @@
+---
+title: "GAM diagnostics"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(mgcv)
+library(ggplot2)
+library(ape)
+```
+
+## GAM
+
+The best model from the preliminary GAMs included most covariates:
+
+```{r eval=FALSE, echo=TRUE}
+gam(Juv.km ~ -1 + as.factor(STRM_ORDER) + s(CLASS_Rank,k=3)+ 
+                 s(StrmSlope,k=4) + 
+                 s(MaxGradD,k=4) + 
+                 s(WidthM,k=4) +
+                 s(OUT_DIST,k=4) + 
+                 s(Barriers,k=4) + 
+                 s(SolMean,k=4) + 
+                 s(MWMT_Index,k=4) + 
+                 s(W3Dppt,k=4) + 
+                 s(IP_COHO,k=4) +
+                 s(PopGrp,bs="re"), 
+               data=train, family = "tw")
+```
+
+\break  
+
+## Residual diagnostics from best model
+
+```{r message=FALSE,warning=FALSE}
+fit <- readRDS("../output/gam_hier_output.rds")
+gam.check(fit[[4]])
+```
+
+\break
+
+## Out of sample prediction
+
+```{r}
+d = read.csv("../JuvData.csv")
+d$PopGrp = as.factor(d$PopGrp)
+train = dplyr::filter(d, JuvYr < max(d$JuvYr))
+test = dplyr::filter(d, JuvYr == max(d$JuvYr),
+                     STRM_ORDER %in% unique(train$STRM_ORDER))
+
+pred = predict(fit[[4]], test)
+plot(test$Juv.km,exp(pred), xlab="Observed", ylab="Predicted")
+plot(log(test$Juv.km),pred,xlab="ln Observed", ylab="ln Predicted")
+```
+
+\break  
+
+## Smooths
+
+```{r}
+plot.gam(fit[[4]],pages=2)
+```
+
+\break  
+
+## Residual spatial autocorrelation?
+
+```{r}
+test$pred =exp(predict(fit[[4]], test))
+test$resid = test$Juv.km-test$pred
+
+ggplot(test, aes(UTM_E,UTM_N,col=resid)) + geom_point(size=1,alpha=0.8)
+```
+### Moran's I
+```{r}
+dists <- as.matrix(dist(cbind(test$UTM_E, test$UTM_N)))
+dists.inv <- 1/dists
+diag(dists.inv) <- 0
+
+Moran.I(test$Juv.km, dists.inv)
+```
+
