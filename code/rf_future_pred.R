@@ -21,13 +21,13 @@ for(i in 1:nrow(grid_search)) {
   train = dplyr::filter(d, JuvYr < (grid_search$test_years[i] - n_years_ahead + 1))  
   test = dplyr::filter(d, JuvYr == grid_search$test_years[i]) 
   fit = randomForest(Juv.km ~ STRM_ORDER + StrmSlope + 
-                       MaxGradD + 
+                       #MaxGradD + 
                        WidthM +
                        OUT_DIST + 
-                       CLASS_Rank + 
+                       #CLASS_Rank + 
                        StrmPow + 
-                       MAnnSed + 
-                       Barriers + 
+                       #MAnnSed + 
+                       #Barriers + 
                        MWMT_Index + 
                        SolMean + 
                        W3Dppt + 
