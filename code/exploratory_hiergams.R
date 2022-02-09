@@ -48,8 +48,12 @@ fit[[4]] = gam(Juv.km ~ -1 + as.factor(STRM_ORDER) + s(CLASS_Rank,k=3)+
                  s(W3Dppt,k=4) + # def include
                  s(SprPpt,k=4) + # def include
                  s(IP_COHO,k=4) +
+<<<<<<< HEAD
                  s(PopGrp,bs="re"),
                
+=======
+                 s(PopGrp,bs="re"), 
+>>>>>>> 7e12c317f9741d96d2287bb71a9ab1b418107d9f
                data=train, family = "tw")
 
 saveRDS(fit,"output/gam_hier_output.rds")

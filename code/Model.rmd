@@ -2,12 +2,20 @@
 title: "ModelFramework"
 author: "Brandon Chacso"
 date: "12/17/2021"
+<<<<<<< HEAD
 output: pdf_document
+=======
+output: html_document
+>>>>>>> 7e12c317f9741d96d2287bb71a9ab1b418107d9f
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+<<<<<<< HEAD
 juv <- read.csv("../JuvData.csv")
+=======
+juv <- read.csv("JuvData.csv")
+>>>>>>> 7e12c317f9741d96d2287bb71a9ab1b418107d9f
 library(glmmTMB)
 library(ggplot2)
 ```
@@ -45,11 +53,14 @@ knitr::kable(t(table(juv$Stratum, juv$JuvYr)),
 
 ```
 
+<<<<<<< HEAD
 
 #Methods
 
 To examine 
 
+=======
+>>>>>>> 7e12c317f9741d96d2287bb71a9ab1b418107d9f
 ##glmmTMB
 
 ```{r}
@@ -62,6 +73,7 @@ juv_ziNB_yr_Stratum <- glmmTMB(Juv.km~StrmSlope + MaxGradD + (1|Stratum) +(1|Juv
                     ziformula=~1,
                     family=nbinom1)
 
+<<<<<<< HEAD
 trainJuv$pos <- numFactor(scale(trainJuv$UTM_E), scale(trainJuv$UTM_E))
 #Stream year and stratum, independent AR1 processes for each stream
 #This ar1 notation seems very backwards to me
@@ -99,6 +111,15 @@ juv <- glmmTMB(Juv.km ~
                           # cov6 = c("s(MAnnSed,k=4)",""),
                           # cov7 = c("s(Barriers,k=4)",""),
 
+=======
+#Stream year and stratum, independent AR1 processes for each stream
+#This ar1 notation seems very backwards to me
+juv_ziNB_ar1_yr_stratum <- glmmTMB(Juv.km~StrmSlope + MaxGradD + ar1(Stratum+0|JuvYr),
+                    data=trainJuv,
+                    ziformula=~1,
+                    family=nbinom1)
+
+>>>>>>> 7e12c317f9741d96d2287bb71a9ab1b418107d9f
 #Stream year and stratum, uncorrelated processes for each stream
 #Computationally too expensive, >1 min = too long
 #Distance between stratum would reduced dimensionality and speed estimation
