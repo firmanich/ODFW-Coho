@@ -2,7 +2,7 @@ library(glmmTMB)
 library(DHARMa)
 
 #Starting with the same data as Eric
-d = read.csv("../JuvData.csv")
+d = read.csv("JuvData.csv")
 d = dplyr::filter(d, !is.na(MWMT_Index))
 d$STRM_ORDER = as.factor(d$STRM_ORDER)
 d$CLASS_Rank = as.factor(d$CLASS_Rank)
@@ -29,56 +29,76 @@ d_p <- d[d$JuvYr==max(d$JuvYr),]
 f <- list()
 
 #Save space and make it cleaner - put models in tmb_model_list.r
-source('tmb_model_list.r')
+source(paste0(getwd(),'/code/tmb_model_list.r'))
 
-#Loop over a few models
-icnt <- 0
-for(m in 1:2){
-  if(m == 2){
-    for(i in 1:8){
-      icnt <- icnt + 1
-      f[[icnt]] <- glmmTMB(get(paste0('m',i)),
-                          data=d_j[,],
-                          verbose=TRUE,
-                          family=tweedie)
-    }
-  }
-  if(m == 1){
-    for(i in 1:8){
-      icnt <- icnt + 1
-      f[[icnt]] <- glmmTMB(get(paste0('m',i)),
-                          data=d_j[,],
-                          ziformula = ~1,
-                          verbose=TRUE,
-                          family=ziGamma(link="log"),
-                          start = log(100))
-    }
-  }
-}
+# #Loop over a few models
+# icnt <- 0
+# for(m in 1:2){
+#   if(m == 2){
+#     for(i in 1:8){
+#       icnt <- icnt + 1
+#       f[[icnt]] <- glmmTMB(get(paste0('m',i)),
+#                           data=d_j[,],
+#                           verbose=TRUE,
+#                           family=tweedie)
+#     }
+#   }
+#   if(m == 1){
+#     for(i in 1:8){
+#       icnt <- icnt + 1
+#       f[[icnt]] <- glmmTMB(get(paste0('m',i)),
+#                           data=d_j[,],
+#                           ziformula = ~1,
+#                           verbose=TRUE,
+#                           family=ziGamma(link="log"),
+#                           start = log(100))
+#     }
+#   }
+# }
+# 
+# myAIC <- sapply(f,AIC)
+# 
+# mods <- list()
+# for(i in 1:7)
+#   mods[[i]] <- get(paste0("m",i))
+# 
+# mod_names <- c('mean',
+#                'pos',
+#                'pos + time',
+#                'pos | time',
+#                'ENV + pos | time',
+#                'ENV + pos + time',
+#                'ENV',
+#                'ENV + fixed.pos')
+# 
+# AICtab <- data.frame(mods = mod_names, #sapply(mods,function(x){return(Reduce(paste,deparse(x)))}), 
+#                      ziGamma = round(myAIC[1:8],0)-min(round(myAIC[1:8],0)),
+#                      Tweedie = round(myAIC[9:16],0)- min(round(myAIC[9:16],0)))
+# save(AICtab, file="AICtab.rData")
+# 
+# #Get the residual information
+# res <- list()
+# for(i in 1:16) {res[[i]] <- simulateResiduals(f[[i]], plot=F)}
+# save(res, file="res.rData")
+# 
+#Simplest spatial, temporal model
+tmp.m <- formula(gsub("[\r\n\t]", "","Juv.km ~ 1 
+                            + (1|JuvYr)
+                            # + exp(pos + 0 | ESU)
+                      "))
 
-myAIC <- sapply(f,AIC)
+m.out <- glmmTMB(tmp.m,
+                     data=d_j[,],
+                     # ziformula = ~(1|JuvYr),
+                     verbose=TRUE,
+                     family=ziGamma,
+                 # ,start = log(100)
+                 )
 
-mods <- list()
-for(i in 1:7)
-  mods[[i]] <- get(paste0("m",i))
+p <- ggplot(d[d$Juv.km>0,], aes(x=log(Juv.km))) + 
+  geom_histogram(binwidth=1) +
+  facet_wrap(~as.factor(Stratum))
 
-mod_names <- c('mean',
-               'pos',
-               'pos + time',
-               'pos | time',
-               'ENV + pos | time',
-               'ENV + pos + time',
-               'ENV',
-               'ENV + fixed.pos')
+print(p)
 
-AICtab <- data.frame(mods = mod_names, #sapply(mods,function(x){return(Reduce(paste,deparse(x)))}), 
-                     ziGamma = round(myAIC[1:8],0)-min(round(myAIC[1:8],0)),
-                     Tweedie = round(myAIC[9:16],0)- min(round(myAIC[9:16],0)))
-save(AICtab, file="AICtab.rData")
-
-#Get the residual information
-res <- list()
-for(i in 1:16) {res[[i]] <- simulateResiduals(f[[i]], plot=F)}
-save(res, file="res.rData")
-
-
+simulateResiduals(m.out, plot=T, n = 1000)

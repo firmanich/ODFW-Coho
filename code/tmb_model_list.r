@@ -46,7 +46,7 @@ m6 <- formula(gsub("[\r\n\t]", "","Juv.km ~ 1
                       + (1|JuvYr)
                       + exp(pos + 0 | ESU)"))
 
-m7 <- formula(gsub("[\r\n\t]", "","Juv.km ~ 1 
+m7 <- formula(gsub("[\r\n\t]", "","Juv.km~ 1 
                       + scale(StrmSlope)
                       + scale(MaxGradD)
                       + scale(WidthM)
