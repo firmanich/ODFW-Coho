@@ -1,0 +1,50 @@
+---
+title: "Comparison across models"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE)
+library(dplyr)
+```
+
+**Methods** 
+
+We compare two different likelihoods, Tweedie versus delta-glmm with Gamma likelihood, for models with fixed-effects and random effects for the spatial, temporal, and spatiotemporal process. Using glmmTMB, we define the spatial grid in 1km segments and assumed the exponential decay in correlation based on Euclidean distance. 
+**Results**
+
+
+- Spatial + temporal models provide the best.
+- qqplot K-S tests signficant deviations from uniformity for random effects models.
+- Comparison of training data.
+
+
+```{r}
+load("AICtab.rData")
+knitr::kable(AICtab,digits=3)
+```
+
+The qqplots for the models with random effects are not great. For the ziGamma
+
+```{r, fig.cap="Standardized residuals for simulated data for zero inflated Gamma model.", fig.width=6, fig.height=4}
+load("res.rData")
+plot(res[[6]])
+```
+
+```{r, fig.cap="Standardized residuals for simulated data for Tweedie model.", fig.width=6, fig.height=4}
+plot(res[[14]])
+```
+
+Conversely, for the fixed effect model that residuals look better, but not great.
+
+
+```{r, fig.cap="Standardized residuals for simulated data for zero inflated Gamma model.", fig.width=6, fig.height=5}
+load("res.rData")
+plot(res[[7]])
+```
+
+```{r, fig.cap="Standardized residuals for simulated data for Tweedie model.", fig.width=6, fig.height=4}
+plot(res[[15]])
+```
+
+

@@ -1,0 +1,68 @@
+---
+title: "Comparison across models"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE)
+library(dplyr)
+```
+
+**Methods** 
+
+For each method, we evaluated 1-step and 2-step ahead forecasts, using the last 5 years of the dataset (2015 - 2019) as test data (e.g. for the 1-step ahead forecast, years up to 2014 were used to predict 2015, years up to 2016 were used to predict 2017, etc.). Total RMSE was calculated for each test year (n = 5), and RMSE was then averaged across test years for a final RMSE statistic. Finally, we also ran the models with 0-step ahead forecasts and evaluated the RMSE on the last year of data (e.g. data through 2016 used, and RMSE calculated for 2016); this latter approach is useful in evaluating how forecast skill degrades for out of sample versus in sample data. 
+
+**Results**
+
+- RF seems to be doing better than GAM
+- GAMs do as well with forecasts as training data (perhaps because not very well overall)
+- Delta - RF approach with separate models for classification and prediction seem to do worse than a combined RF model (this is kind of surprising)
+
+```{r summarize_rf}
+rf_summary = data.frame("method"="random forest","years ahead" = seq(0,2), rmse = 0)
+
+for(i in 0:2) {
+rf_res = readRDS(paste0("../output/rf_",i,"yr.rds"))
+# what is the average rmse across test years
+best_rf = dplyr::group_by(rf_res,mtry,ntree) %>%
+  dplyr::summarize(mean_rmse = mean(rmse)) %>% 
+  dplyr::arrange(mean_rmse)
+rf_summary$rmse[i+1] = mean(dplyr::filter(rf_res, mtry == best_rf$mtry[1],             ntree == best_rf$ntree[1])$rmse )
+  
+}
+knitr::kable(rf_summary,digits=3)
+```
+
+```{r summarize_gams}
+gam_summary = data.frame("method"="gam","years ahead" = seq(0,2), rmse = 0)
+
+for(i in 0:2) {
+gam_res = readRDS(paste0("../output/gam_",i,"yr.rds"))
+gam_res$model = ""
+for(j in 1:nrow(gam_res)) gam_res$model[j] = paste(gam_res[j,-c(1:3)], sep=" ", collapse=" ")
+
+# what is the average rmse across test years
+best_gam = dplyr::group_by(gam_res,model) %>%
+  dplyr::summarize(mean_rmse = mean(rmse)) %>% 
+  dplyr::arrange(mean_rmse)
+gam_summary$rmse[i+1] = mean(dplyr::filter(gam_res, 
+                      model == best_gam$model[1])$rmse)
+  
+}
+knitr::kable(gam_summary,digits=3)
+```
+
+```{r summarize_rfdelta}
+rf_summary = data.frame("method"="random forest - delta","years ahead" = seq(0,2), rmse = 0)
+
+for(i in 0:2) {
+rf_res = readRDS(paste0("../output/rf-delta_",i,"yr.rds"))
+# what is the average rmse across test years
+best_rf = dplyr::group_by(rf_res,mtry,ntree) %>%
+  dplyr::summarize(mean_rmse = mean(rmse)) %>% 
+  dplyr::arrange(mean_rmse)
+rf_summary$rmse[i+1] = mean(dplyr::filter(rf_res, mtry == best_rf$mtry[1],             ntree == best_rf$ntree[1])$rmse )
+  
+}
+knitr::kable(rf_summary,digits=3)
+```
