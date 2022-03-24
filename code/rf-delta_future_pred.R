@@ -24,13 +24,13 @@ for(i in 1:nrow(grid_search)) {
   train$present = as.factor(ifelse(train$Juv.km>0,1,0))
   train$log_juv.km = log(train$Juv.km)
   fit_present = randomForest(present ~ STRM_ORDER + StrmSlope + 
-                       MaxGradD + 
+                       #MaxGradD + 
                        WidthM +
                        OUT_DIST + 
-                       CLASS_Rank + 
+                       #CLASS_Rank + 
                        StrmPow + 
-                       MAnnSed + 
-                       Barriers + 
+                       #MAnnSed + 
+                       #Barriers + 
                        MWMT_Index + 
                        SolMean + 
                        W3Dppt + 
@@ -43,13 +43,13 @@ for(i in 1:nrow(grid_search)) {
                      ntree = grid_search$ntree[i],
                      data=train)
   fit_pos = randomForest(log_juv.km ~ STRM_ORDER + StrmSlope + 
-                               MaxGradD + 
+                               #MaxGradD + 
                                WidthM +
                                OUT_DIST + 
-                               CLASS_Rank + 
+                               #CLASS_Rank + 
                                StrmPow + 
-                               MAnnSed + 
-                               Barriers + 
+                               #MAnnSed + 
+                               #Barriers + 
                                MWMT_Index + 
                                SolMean + 
                                W3Dppt + 

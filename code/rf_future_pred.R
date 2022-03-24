@@ -6,7 +6,7 @@ d = dplyr::filter(d, !is.na(MWMT_Index))
 d$STRM_ORDER = as.factor(d$STRM_ORDER)
 d$CLASS_Rank = as.factor(d$CLASS_Rank)
 
-n_years_ahead = 0# can be 0, 1, 2
+n_years_ahead = 2# can be 0, 1, 2
 # use avg predictions for last 5 years to train model
 n_test = 5
 test_years = seq(max(d$JuvYr)-n_test+1, max(d$JuvYr))
