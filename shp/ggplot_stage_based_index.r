@@ -1,5 +1,6 @@
 library(sp)
 library(glmmTMB)
+library(sdmTMB)
 library(raster)
 library(ggplot2)
 library(viridis)
@@ -58,10 +59,11 @@ no_covars <- TRUE
 for(myStage in c('rear')){
   stage <- myStage
   source("wrangle_data.r")
+  df <- wrangle_data(stage = myStage)
   if(no_covars){
-    load(paste0("output/output_st_rear.rData"))
+    load(paste0("output/output_st_",stage,".rData"))
   }else{
-    load(paste0("output/output_rear.rData"))
+    load(paste0("output/output_",stage,".rData"))
   }
   
   #Subset by unique locations, non-duplicated df

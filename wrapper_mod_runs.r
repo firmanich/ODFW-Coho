@@ -4,10 +4,10 @@ source('wrangle_data.r')
 root <- getwd()
 
 #Just do spatiotemporal modeling without any covariates
-no_covars <- FALSE
+no_covars <- TRUE
 save_output <- TRUE
 
-myStages <- c('Spwn')#rear or Spwn
+myStages <- c('rear','Spwn')#rear or Spwn
 for(stage in myStages){
   
   df <- wrangle_data(stage=stage)
@@ -29,7 +29,7 @@ for(stage in myStages){
   
   
     #Run through models
-    for(mod in c('sdm')){
+    for(mod in c('rf')){
       #Build all of the different models
       #get the old output
       source("wrapper_mod_args.r")

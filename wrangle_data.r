@@ -9,10 +9,10 @@ wrangle_data <- function(stage=NA){
                   stringsAsFactors = FALSE) %>% 
     mutate('dens' = Juv.km) %>% 
     mutate('yr' = as.integer(JuvYr)) %>% 
-    filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.))) %>% #get rid of anything without a density
-    mutate(UTM_E = as.numeric(UTM_E)) %>% 
-    mutate(UTM_N = as.numeric(UTM_N)) %>% 
-    filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
+    mutate(UTM_E = as.numeric(UTM_E)) %>%
+    mutate(UTM_N = as.numeric(UTM_N)) %>%
+    filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.)))#get rid of anything without a density
+    # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
   
   #Read in the spawner data, change AUC.Mi to dens
   sp <- read.csv('SpawnData.csv',
@@ -21,10 +21,10 @@ wrangle_data <- function(stage=NA){
                  stringsAsFactors = FALSE) %>%
     mutate('dens' = AUC.Mi) %>% 
     mutate('yr' = SpwnYr) %>% 
-    filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.))) %>% #get rid of anything without a density
-    mutate(UTM_E = as.numeric(UTM_E)) %>% 
-    mutate(UTM_N = as.numeric(UTM_N)) %>% 
-    filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
+    mutate(UTM_E = as.numeric(as.character(UTM_E))) %>%
+    mutate(UTM_N = as.numeric(UTM_N)) %>%
+    filter_at(vars(dens), all_vars(!is.na(.))) #get rid of anything without a density
+    # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
   
   #row bind the data based on common column headings
   depVars <- c('STRM_ORDER','LifeStage','dens','yr')
@@ -40,7 +40,7 @@ wrangle_data <- function(stage=NA){
   scale_this <- function(x) as.vector(scale(x))
   my_factor <- function(x) as.factor(x)
   #combine, rescale, and fill in some missing vals
-  df <- bind_rows(juv,sp) %>% 
+  df <- bind_rows(juv,sp) %>% #Not sure why I decided to combine these and then subset
     dplyr::select(all_of(c(depVars,coVars)))%>% #grab myVars from above
     filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.))) %>% #get rid of anything without a density
     filter(LifeStage==!!stage) %>% #grab a particular life stage
@@ -60,7 +60,7 @@ wrangle_data <- function(stage=NA){
            OUT_DIST = scale_this(OUT_DIST)
     )
   
-  df <- df[df$UTM_E_km!=0,]
+  # df <- df[df$UTM_E_km!=0,]
   # df <- na.omit(df)
   return(df)
   

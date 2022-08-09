@@ -73,14 +73,14 @@ if(project){
   rf_args <- expand.grid(test_years = test_years,
                          n_years_ahead = n_years_ahead,
                          mod = 1:length(rf_forms), 
-                         mtry = seq(3,15,2), #,15,2 
-                         ntree = seq(200,1000,100)) # ,1000,100
+                         mtry = seq(3,11,2), #,15,2 
+                         ntree = seq(200,1000,200)) # ,1000,100
   if(no_covars){
     rf_args <- expand.grid(test_years = test_years,
                            n_years_ahead = n_years_ahead,
                            mod = 1:1, 
-                           mtry = seq(3,15,2), #,15,2 
-                           ntree = seq(200,1000,100)) # ,1000,100
+                           mtry = seq(3,11,2), #,15,2 
+                           ntree = seq(200,1000,200)) # ,1000,100
   }
 }
 mod_search$args$rf <- rf_args
