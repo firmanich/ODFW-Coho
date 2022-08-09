@@ -83,9 +83,9 @@ for(i in 1:length(ODFW_names)){
 p.df <- pop_poly #start with population groups
 p.df[,names(df)[!names(df)%in%names(pop_poly)]] <- 0 #add all of the column heading
 p.df <- do.call("rbind", replicate(length(unique(df$JuvYr)), p.df, simplify = FALSE))
-p.df$JuvYr <- rep(unique(df$JuvYr),each=nrow(pop_poly))
+p.df$yr <- rep(unique(df$yr),each=nrow(pop_poly))
 p.df$PopGrp <- as.factor(p.df$PopGrp)
 p.df$UTM_E_km <- as.numeric(p.df$UTM_E_km)
 p.df$UTM_N_km <- as.numeric(p.df$UTM_N_km)
 
-p <- predict(fit, newdata=p.df)#[p.df$JuvYr%in%unique(df$JuvYr),])
+p <- predict(fit)#, newdata=p.df)#[p.df$JuvYr%in%unique(df$JuvYr),])

@@ -1,18 +1,20 @@
 library(ggplot2)
-library(dplyr)
 #Run through models
 load("C:/noaa/projects/ODFW-Coho/output/output.rData")
-gam <- (output$project$gam$grid_search) %>%  
+assign("gam",output$project$gam$grid_search)
+gam <- gam %>%  
   mutate(mod = "gam") %>% 
-  dplyr::select(c(mod,n_years_ahead,rmse))
+  select(c(mod,n_years_ahead,rmse))
 
-sdm <- (output$project$sdm$grid_search) %>%  
+assign("sdm",output$project$sdm$grid_search)
+sdm <- sdm %>%  
   mutate(mod = "sdm") %>% 
-  dplyr::select(c(mod,n_years_ahead,rmse))
+  select(c(mod,n_years_ahead,rmse))
 
-rf <- output$project$rf$grid_search %>%  
+assign("rf",output$project$rf$grid_search)
+rf <- rf %>%  
   mutate(mod = "rf") %>% 
-  dplyr::select(c(mod,n_years_ahead,rmse))
+  select(c(mod,n_years_ahead,rmse))
 
 rmse_mean <- bind_rows(gam,sdm,rf) %>% 
   group_by(mod,n_years_ahead) %>%
