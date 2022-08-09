@@ -44,8 +44,8 @@ for(i in 1:nrow(grid_search)) {
   
 }
 
-saveRDS(grid_search,paste0("output/rf_",n_years_ahead,"yr.rds"))
-
+# saveRDS(grid_search,paste0("output/rf_",n_years_ahead,"yr.rds"))
+# 
 dplyr::group_by(grid_search,mtry,ntree) %>% 
   dplyr::summarize(mean_rmse=mean(rmse)) %>% 
   dplyr::arrange(mean_rmse)
