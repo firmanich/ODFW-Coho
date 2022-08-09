@@ -4,7 +4,7 @@ source('wrangle_data.r')
 root <- getwd()
 
 #Just do spatiotemporal modeling without any covariates
-no_covars <- TRUE
+no_covars <- FALSE
 save_output <- TRUE
 
 myStages <- c('rear','Spwn')#rear or Spwn
