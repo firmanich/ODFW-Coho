@@ -42,7 +42,7 @@ wrangle_data <- function(stage=NA){
   #combine, rescale, and fill in some missing vals
   df <- bind_rows(juv,sp) %>% #Not sure why I decided to combine these and then subset
     dplyr::select(all_of(c(depVars,coVars)))%>% #grab myVars from above
-    filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.))) %>% #get rid of anything without a density
+    filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.))) %>% #get rid of anything without a density or UTM
     filter(LifeStage==!!stage) %>% #grab a particular life stage
     mutate_at(all_of(coVars), ~replace_na(.,mean(., na.rm = TRUE))) %>% #get rid of NAs, a little TOO CLUTCHY
     mutate(UTM_E_km = UTM_E/1000, #Rescale
@@ -61,7 +61,7 @@ wrangle_data <- function(stage=NA){
     )
   
   # df <- df[df$UTM_E_km!=0,]
-  # df <- na.omit(df)
+  df <- na.omit(df) #Necessary to get Spwn data to work.
   return(df)
   
 }
