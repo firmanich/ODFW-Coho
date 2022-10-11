@@ -1,6 +1,6 @@
 library(ggplot2)
 #Run through models
-load("C:/noaa/projects/ODFW-Coho/output/output.rData")
+load("C:/noaa/projects/ODFW-Coho/output/output_Spwn.rData")
 assign("gam",output$project$gam$grid_search)
 gam <- gam %>%  
   mutate(mod = "gam") %>% 

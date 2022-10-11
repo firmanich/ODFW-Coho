@@ -1,18 +1,32 @@
-# The dropped variables
-#Barriers, mean annual sediment, max gad D, class rank, 
-
-#Stream order, stream slope, 
-
-
-#Marginal effects,
-#covariate all at zero, 
-
-#sdmTMB
-#slow convergence, penalized complexity priors - pc priors, you can turn these on to speed up the estimation
-#gams in sdmTMB, we could try 
-model_args <- function(n_years_ahead = 0, test_years = 2019){
+function_model_search <- function(test_years = test_years,
+                                n_years_ahead = n_years_ahead,
+                                project = FALSE,
+                                no_covars = TRUE,
+                                output = output){
+  
+  #@test_years are the years that you are testing, not training
+  #@n_years_ahead how far into the future are you projecting
+  #@project are you projecting into the future
+  #@no_covars are you leaving the covariates out (i.e., spatiotemporal model only)
+  
+  #return a tagged list for the the different types of models
+  
+  # The dropped variables
+  #Barriers, mean annual sediment, max gad D, class rank, 
+  
+  #Stream order, stream slope, 
+  
+  
+  #Marginal effects,
+  #covariate all at zero, 
+  
+  #sdmTMB
+  #slow convergence, penalized complexity priors - pc priors, you can turn these on to speed up the estimation
+  #gams in sdmTMB, we could try 
+  
+  # project <- TRUE
   mod_search <- list(years=test_years, 
-                     mods = list(rf = list(), gam=ls(), sdm=list()), 
+                     form = list(rf = list(), gam=ls(), sdm=list()), 
                      args = list(rf=list(), gam=list(), sdm = list()))
   
   rf_forms <- list(
@@ -66,21 +80,21 @@ model_args <- function(n_years_ahead = 0, test_years = 2019){
   if(project){
     rf_args <- expand.grid(test_years = test_years,
                            n_years_ahead = n_years_ahead,
-                           mod = 1, 
+                           mod = 1, #Why do you do this
                            mtry = output$exploratory$rf$best_mtry, 
                            ntree = output$exploratory$rf$best_ntree)
   }else{
     rf_args <- expand.grid(test_years = test_years,
                            n_years_ahead = n_years_ahead,
                            mod = 1:length(rf_forms), 
-                           mtry = seq(3,11,2), #,15,2 
-                           ntree = seq(200,1000,200)) # ,1000,100
+                           mtry = seq(3,11,2), 
+                           ntree = seq(200,1000,200)) # ,1000,200
     if(no_covars){
       rf_args <- expand.grid(test_years = test_years,
                              n_years_ahead = n_years_ahead,
                              mod = 1:1, 
-                             mtry = seq(3,11,2), #,15,2 
-                             ntree = seq(200,1000,200)) # ,1000,100
+                             mtry = seq(3,11,2), 
+                             ntree = seq(200,1000,200)) # ,1000,200
     }
   }
   mod_search$args$rf <- rf_args
@@ -207,6 +221,6 @@ model_args <- function(n_years_ahead = 0, test_years = 2019){
   }
   
   mod_search$args$sdm <- sdm_args
-  
+
   return(mod_search)
 }

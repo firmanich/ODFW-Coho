@@ -1,9 +1,10 @@
-wrangle_data <- function(stage=NA){
-  library(dplyr)
-  library(tidyr)
+function_wrangle_data <- function(stage=NA,
+                                  output = output,
+                                  dir = root){
+  
   
   #Read in the juvenile data, change AUC.Mi to dens
-  juv <- read.csv('JuvData.csv', 
+  juv <- read.csv(paste0(dir,'/data/JuvData.csv'), 
                   header=TRUE,
                   dec=".",
                   stringsAsFactors = FALSE) %>% 
@@ -15,7 +16,7 @@ wrangle_data <- function(stage=NA){
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
   
   #Read in the spawner data, change AUC.Mi to dens
-  sp <- read.csv('SpawnData.csv',
+  sp <- read.csv(paste0(dir,'/data/SpawnData.csv'),
                  header=TRUE,
                  dec=".",
                  stringsAsFactors = FALSE) %>%
