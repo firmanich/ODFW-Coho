@@ -28,7 +28,7 @@ function_wrangle_data <- function(stage=NA,
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
   
   #row bind the data based on common column headings
-  depVars <- c('STRM_ORDER','LifeStage','dens','yr')
+  depVars <- c('STRM_ORDER','LifeStage','dens','yr','PopGrp')
   coVars <- c('UTM_E','UTM_N'
               ,'WidthM','W3Dppt',
               'MWMT_Index','StrmPow',

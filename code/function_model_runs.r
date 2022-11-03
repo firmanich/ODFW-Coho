@@ -1,10 +1,10 @@
-function_run_models <- function(project = TRUE,
-                                no_covars=FALSE,
-                                save_output=TRUE,
-                                stage = 'rear',
-                                mod = c('rf'),
-                                n_years_ahead = c(0,1,2),
-                                n_test = 5){
+function_run_models <- function(project = TRUE, #This is whether you want to project into the future 
+                                no_covars=FALSE, #Deprecated   - whether a covariate only model
+                                save_output=TRUE, #Do you want to save the output
+                                stage = 'rear', #Which stage rear or Spwn
+                                mod = c('rf'), # the type of model 'rf', 'gam', 'glm'
+                                n_years_ahead = c(0,1,2), #predictions into the future
+                                n_test = 5){ #Number of years in the RMSE model comparison, if it's 5 the you're comparing 2015 through 2019
   library(dplyr)
   library(tidyr)
   library(sdmTMB)

@@ -32,7 +32,7 @@
 
   #Use kmeans to map the stream in the original data frame to 
   #the prediction dataframe
-  kmean <- nn2(df[,c('UTM_E','UTM_N')],nd.df[,c('UTM_E','UTM_N')], k=1)
+  # kmean <- nn2(df[,c('UTM_E','UTM_N')],nd.df[,c('UTM_E','UTM_N')], k=1)
   
   coVars <- c('WidthM','W3Dppt',
               'MWMT_Index','StrmPow',
@@ -41,7 +41,10 @@
               'OUT_DIST','STRM_ORDER' 
   )
   for(iii in coVars){
-    nd.df[,iii] <- df[kmean$nn.idx,iii]
+    for(y in unique(nd.df$yr)){
+      kmean <- nn2(df[df$yr==y,c('UTM_E','UTM_N')],nd.df[nd.df$yr==y,c('UTM_E','UTM_N')], k=1)
+      nd.df[nd.df$yr==y,iii] <- df[kmean$nn.idx,iii]
+    }
   }
   nd.df$fSTRM_ORDER <- as.factor(nd.df$STRM_ORDER)
 
@@ -116,7 +119,7 @@
 
   #Use kmeans to map the stream in the original data frame to 
   #the prediction dataframe
-  kmean <- nn2(df[,c('UTM_E','UTM_N')],nd.df[,c('UTM_E','UTM_N')], k=1)
+  # kmean <- nn2(df[,c('UTM_E','UTM_N')],nd.df[,c('UTM_E','UTM_N')], k=1)
   
   coVars <- c('WidthM','W3Dppt',
               'MWMT_Index','StrmPow',
@@ -125,7 +128,10 @@
               'OUT_DIST','STRM_ORDER' 
   )
   for(iii in coVars){
-    nd.df[,iii] <- df[kmean$nn.idx,iii]
+    for(y in unique(nd.df$yr)){
+      kmean <- nn2(df[df$yr==y,c('UTM_E','UTM_N')],nd.df[nd.df$yr==y,c('UTM_E','UTM_N')], k=1)
+      nd.df[nd.df$yr==y,iii] <- df[kmean$nn.idx,iii]
+    }
   }
   nd.df$fSTRM_ORDER <- as.factor(nd.df$STRM_ORDER)
   

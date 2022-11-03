@@ -8,8 +8,8 @@
 #   library(cowplot)
 #   
   
-  png('output/spatial_index.png',
-      height = 600, width = 600, pointsize = 14)
+  # png('output/spatial_index.png',
+  #     height = 600, width = 600, pointsize = 14)
   
   stage <- "Spwn" #rear or Spwn
   #Grab the data for stage
@@ -19,7 +19,7 @@
   load(paste0("output/output_",stage,".rData"))
 
 
-    #Subset by unique locations, non-duplicated df
+  #Subset by unique locations, non-duplicated df
   nd.df <- df[!duplicated(df[,c('UTM_E_km','UTM_N_km')]),c('UTM_E_km','UTM_N_km')]
   nd <- nrow(nd.df)
   nd.df$UTM_E <- nd.df$UTM_E_km*1000
@@ -41,7 +41,12 @@
               'OUT_DIST','STRM_ORDER' 
   )
   for(iii in coVars){
-    nd.df[,iii] <- df[kmean$nn.idx,iii]
+    for(y in unique(nd.df$yr)){
+      kmean <- nn2(df[df$yr==y,c('UTM_E','UTM_N')],
+                   nd.df[nd.df$yr==y,c('UTM_E','UTM_N')], 
+                   k=1)
+      nd.df[nd.df$yr==y,iii] <- df[kmean$nn.idx,iii]
+    }
   }
   nd.df$fSTRM_ORDER <- as.factor(nd.df$STRM_ORDER)
 
@@ -115,7 +120,7 @@
 
   #Use kmeans to map the stream in the original data frame to 
   #the prediction dataframe
-  kmean <- nn2(df[,c('UTM_E','UTM_N')],nd.df[,c('UTM_E','UTM_N')], k=1)
+  # kmean <- nn2(df[,c('UTM_E','UTM_N')],nd.df[,c('UTM_E','UTM_N')], k=1)
   
   coVars <- c('WidthM','W3Dppt',
               'MWMT_Index','StrmPow',
@@ -124,7 +129,10 @@
               'OUT_DIST','STRM_ORDER' 
   )
   for(iii in coVars){
-    nd.df[,iii] <- df[kmean$nn.idx,iii]
+    for(y in unique(nd.df$yr)){
+      kmean <- nn2(df[df$yr==y,c('UTM_E','UTM_N')],nd.df[nd.df$yr==y,c('UTM_E','UTM_N')], k=1)
+      nd.df[nd.df$yr==y,iii] <- df[kmean$nn.idx,iii]
+    }
   }
   nd.df$fSTRM_ORDER <- as.factor(nd.df$STRM_ORDER)
   
@@ -192,7 +200,7 @@
     xlab("Year")
   # 
   print(g)
-  dev.off()
+  # dev.off()
 # 
 #   return(nd.df)  
 # }

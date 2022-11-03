@@ -1,9 +1,12 @@
 plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
                                            frms = c("covar_only","spatial_only","best_mod"),
-                                           stages=c("rear"),
+                                           stages=c("rear","Spwn"), #rear and or Spwn
                                            myFacet = formula(gsub("[\r\n\t]", 
                                                                   "",
-                                                                  "LifeStage + yr + frm ~ mod")),
+                                                                  "LifeStage + yr~ mod")),
+                                           # myFacet = formula(gsub("[\r\n\t]", 
+                                           #                        "",
+                                           #                        "LifeStage + yr + frm ~ mod")),
                                            save_to_file = FALSE,
                                            n_years_ahead = 0,
                                            comp_mods = c("gam","sdm","rf"),
@@ -22,11 +25,13 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
   library(viridisLite)
   library(cowplot)
   library(RANN)
+  source("./code/function_model_search.r")
+  source("./code/function_wrangle_data.r")
   j <- 1
     # stages <- "rear"
   for(stage in stages){
     #These are the tested years, as opposed to the training years
-    # stage <- "rear"
+    # stage <- "rear", "Spwn"
     load(file = paste0("C:/NOAA/PROJECTS/ODFW-Coho/output/output_",stage,".rdata"))
     
     #Grab the data for stage
@@ -107,27 +112,33 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
                       replicate(length(unique(df$yr)), 
                                 p.df, simplify = FALSE))
       
+      p.df$yr <- rep(unique(df$yr),each=nrow(predmask))
+      p.df$fYr <- as.factor(p.df$yr)
       #Use kmeans to map the stream in the original data frame to 
       #the prediction dataframe
       kmean <- nn2(df[,c('UTM_E','UTM_N')],p.df[,c('UTM_E','UTM_N')], k=1)
       
       #interpolate covariates with kmeans distances
-      if(f=="covar_only"){
+      if(f!="spatial_only"){
         coVars <- c('WidthM','W3Dppt',
                     'MWMT_Index','StrmPow',
-                    'SprPpt','IP_COHO', 
+                    'SprPpt','IP_COHO','STRM_ORDER', 
                     'SolMean','StrmSlope',
                     'OUT_DIST'
         )
-        for(iii in coVars)
-          p.df[,iii] <- df[kmean$nn.idx,iii]
+        
+        # There's an error here
+        for(iii in coVars){
+          for(y in unique(p.df$yr)){
+            kmean <- nn2(df[df$yr==y,c('UTM_E','UTM_N')],p.df[p.df$yr==y,c('UTM_E','UTM_N')], k=1)
+            p.df[p.df$yr==y,iii] <- df[kmean$nn.idx,iii]
+          }
+        }
       }
       
       #You always need to do this strm_order step.
-      p.df[,'STRM_ORDER'] <- df[kmean$nn.idx,'STRM_ORDER']
+      # p.df[,'STRM_ORDER'] <- df[kmean$nn.idx,'STRM_ORDER']
       p.df$fSTRM_ORDER <- as.factor(p.df$STRM_ORDER)
-      p.df$yr <- rep(unique(df$yr),each=nrow(predmask))
-      p.df$fYr <- as.factor(p.df$yr)
       p.df$LifeStage <- stage
       
       for(k in comp_mods){
@@ -228,10 +239,14 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
   }#end form
   
   lr <- log(range(c(p$pred[p$yr%in%plot_year])))
+  
+  p$LifeStage[p$LifeStage =='rear'] <- 'Juvenile'
+  p$LifeStage[p$LifeStage =='Spwn'] <- 'Spawner'
+  
   g <- ggplot(p[p$yr%in%plot_year,],
                aes(x=UTM_E_km,y=UTM_N_km, fill=log(pred)),
                alpha=0.2) +
-    geom_raster(show.legend = FALSE) +
+    geom_raster(show.legend = TRUE) +
     facet_grid(myFacet) +
     # scale_fill_continuous()+
     scale_fill_viridis_c(option="inferno")+
@@ -244,7 +259,7 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
     xlab("Easting (km)")
   
   if(save_to_file)
-    png('output/plot_comp_spatial_by_lifeStage.png',
+    png(paste0('output/plot_comp_spatial_by_lifeStage_',stage,'.png'),
         height = 600, width = 600, pointsize = 14)
   
   print(g)
