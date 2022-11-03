@@ -5,6 +5,7 @@ function_run_models <- function(project = TRUE, #This is whether you want to pro
                                 mod = c('rf'), # the type of model 'rf', 'gam', 'glm'
                                 n_years_ahead = c(0,1,2), #predictions into the future
                                 n_test = 5){ #Number of years in the RMSE model comparison, if it's 5 the you're comparing 2015 through 2019
+  #Katie and I are working on the doc.
   library(dplyr)
   library(tidyr)
   library(sdmTMB)
