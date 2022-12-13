@@ -4,7 +4,7 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
                                 stage = 'rear', #Which stage rear or Spwn
                                 mod = c('rf'), # the type of model 'rf', 'gam', 'glm'
                                 n_years_ahead = c(0), #predictions into the future
-                                n_test = 1){ #Number of years in the RMSE model comparison, if it's 5 the you're comparing 2015 through 2019
+                                n_test = 1)
   #Katie and I are working on the doc.
   library(dplyr)
   library(tidyr)
