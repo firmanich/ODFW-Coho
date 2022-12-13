@@ -1,10 +1,10 @@
-
 function_model_exploration <- function(stage = stage,
                               mod = mod, 
                               no_covars = no_covars, 
                               project = project,
-                              output = output,
+                              # output = output,
                               mod_search = mod_search,
+                              df = df,
                               save_output = FALSE){
   
 
@@ -13,9 +13,11 @@ function_model_exploration <- function(stage = stage,
   #@
   #@output is a saved tagged list of both exploratory and projected output
   #Grab the model search arguments from the saved tagged list
-  
+  # mod <- "gam"
   search <- mod_search$args[[mod]]
-
+  print(paste0("searching over ",mod))
+  print(search[[mod]])
+  
   # find model with lowest out of sample rmse
   search$rmse <- 1e6
   search$AIC <- 1e6
@@ -26,13 +28,12 @@ function_model_exploration <- function(stage = stage,
   #Reset the model selection criteria
   bestRMSE <- 1e6
   bestAIC <- 1e6
-
-  print(paste("saving output", save_output))
+  
   for(i in 1:nforms){
     train <- dplyr::filter(df,
                           yr < (mod_search$args[[mod]]$test_years[i] - mod_search$args[[mod]]$n_years_ahead[i] + 1)) %>%
       dplyr::mutate(fYr = as.factor(yr))
-
+    
     test <- dplyr::filter(df, yr == mod_search$args[[mod]]$test_years[i]) %>%
       dplyr::mutate(fYr = as.factor(yr))
 
@@ -101,8 +102,10 @@ function_model_exploration <- function(stage = stage,
     }#project = TRUE
 
     if(!project){#just do the exploration
+      #For the exploration of the best model fit, 
+      #evaluate the model on all of the data
       print(paste(stage,mod," exploration", i, " of ", nforms))
-      mod_frm <- mod_search$form[[mod]][[search$mod[[i]]]]
+      mod_frm <- mod_search$form[[mod]][[stage]][[search$mod[[i]]]]
 
       if(mod=="rf"){
         #Fit the data
@@ -121,7 +124,7 @@ function_model_exploration <- function(stage = stage,
 
       if(mod=="sdm"){
         fit <- sdmTMB(mod_frm,
-                    data = train,
+                    data = train, 
                     mesh = mesh,
                     family = tweedie(link = "log"),
                     time = "yr",
@@ -130,29 +133,33 @@ function_model_exploration <- function(stage = stage,
                     anisotropy = TRUE,
                     extra_time = unique(test$yr[test$yr>max(train$yr)]), #Why is this necessary if the years are the same?
                     silent=TRUE)
-        pred <- predict(fit, train, re_form_iid = NA)
+        pred <- predict(fit, test, re_form_iid = NA)
         #Save the root mean square error in the search
-        search$rmse[i] = sqrt(mean((train$dens - exp(pred$est))^2))
+        search$rmse[i] = sqrt(mean((test$dens - exp(pred$est))^2))
         search$AIC[i] <- AIC(fit)
       }
 
       if(mod=="gam"){
-          #Get the model forms from the "wrapper_mod_args.r script")
         # mod_search$args[[mod]]$mod[i] <- i
         # mod_search$args[[mod]]$args[i] <- NA
+        # print(mod_frm)
         fit <-  gam(mod_frm, data=train, family = "tw")
-        search$rmse[i] <- sqrt(mean((fit$fitted.values-train$dens)^2))
+        pred <- predict(fit,test)
+        # print(mod_frm)
+        # print(test$dens)
+        # print(pred)
+        search$rmse[i] <- sqrt(mean((exp(pred)-test$dens)^2))
         search$AIC[i] <- AIC(fit)
       }
 
-      if((search$AIC[i]<bestAIC) & (mod=='sdm' | mod=='gam')){
-        bestAIC <- search$AIC[i]
-        best_fit <- fit
-      } #This way you don't have to refit the model when saving the best fit
-      if((search$rmse[i]<bestRMSE) & (mod=='rf')){
-        bestRMSE <- search$rmse[i]
-        best_fit <- fit
-      } #This way you don't have to refit the model when saving the best fit
+      # if((search$AIC[i]<bestAIC) & (mod=='sdm' | mod=='gam')){
+      #   bestAIC <- search$AIC[i]
+      #   best_fit <- fit
+      # } #This way you don't have to refit the model when saving the best fit
+      # if((search$rmse[i]<bestRMSE) & (mod=='rf')){
+      #   bestRMSE <- search$rmse[i]
+      #   best_fit <- fit
+      # } #This way you don't have to refit the model when saving the best fit
     }
 
 
@@ -171,7 +178,7 @@ function_model_exploration <- function(stage = stage,
                                  grid_search = search)
     }
     if(mod=='gam'){
-      output$project$sdm <- list(best_mod = output$exploratory$gam$best_mod,
+      output$project$gam <- list(best_mod = output$exploratory$gam$best_mod,
                                  best_fit = output$exploratory$gam$best_fit,
                                  grid_search = search)
     }
@@ -183,54 +190,109 @@ function_model_exploration <- function(stage = stage,
                                  grid_search = search)
     }
     if(save_output){
-      print("saving output")
-      print(names(output))
+      # print("saving output")
+      # print(names(output))
       save(output, file = paste0("output/output_",stage,".rdata"))
     }
   }else{
+    
+    print(search)
+    
     if(mod=='sdm'){
-      indx = which.min(search$AIC)
-      best_mod_frm <- mod_search$form[[mod]][[search$mod[indx]]] #Get the model index, not the grid index
-      best_sp <- search$sp[indx]
-      best_st <- search$st[indx]
+      print(search)
+      #Get the model index for the model with the lowest RMSE
+      indx = search %>%
+        group_by(mod,sp,st) %>%
+        summarise(mean = mean(rmse)) %>% #mean RMSE over n_test years
+        subset(mean == min(mean)) #row with lowest mean
+      print(indx)
+      best_mod_frm <- mod_search$form[[mod]][[stage]][[indx$mod]] #Get the model index, not the grid index
+      best_sp <- indx$sp
+      best_st <- indx$st
       #re-fit best model
-
-      output$exploratory[[mod]] <- append(output$exploratory[[mod]],
-                                       list(best_st = best_st,
+      print(mod_search$form[[mod]][[stage]])
+      #refitting best fit model with all of the data for all years
+      train <- df %>% dplyr::mutate(fYr = as.factor(yr))
+      #Create the mesh
+      mesh <- make_mesh(train, c("UTM_E_km", "UTM_N_km"), cutoff = 10)
+      best_fit <- sdmTMB(best_mod_frm,
+                    data = train, 
+                    mesh = mesh,
+                    family = tweedie(link = "log"),
+                    time = "yr",
+                    spatial = best_sp,
+                    spatiotemporal = best_st,
+                    anisotropy = TRUE,
+                    silent=TRUE)
+      
+      print("Based on mean RMSE")
+      print(search %>%
+              group_by(mod) %>%
+              summarise(mean = mean(rmse)))
+      print(paste("Refitting and saving best fit model #",indx))
+      print("The best form is,")
+      print(best_mod_frm)
+      
+      output$exploratory[[mod]] <- list(best_st = best_st,
                                             best_sp = best_sp,
                                             best_mod = best_mod_frm,
                                             best_fit = best_fit,
-                                            grid_search = search))
+                                            grid_search = search)
     }
     if(mod=='gam'){
-      indx = which.min(search$AIC)
-      best_mod_frm <- mod_search$form[[mod]][[search$mod[indx]]] #Get the model index, not the grid search index
-
-      output$exploratory[[mod]] <- append(output$exploratory[[mod]],
-                                          list(best_mod = best_mod_frm,
+      print(search)
+      #Get the model index for the model with the lowest RMSE
+      indx = search %>%
+        group_by(mod) %>%
+        summarise(mean = mean(rmse)) %>% #mean RMSE over n_test years
+        filter(mean == min(mean))# %>% #lowest RMSE
+        # pull(mod) #best model
+      best_mod_frm <- mod_search$form[[mod]][[stage]][[indx$mod]] #Get the model index, not the grid search index
+      print(mod_search$form[[mod]][[stage]])
+      #refitting best fit model
+      
+      print("Based on mean RMSE")
+      print(search %>%
+              group_by(mod) %>%
+              summarise(mean = mean(rmse)))
+      print(paste("Refitting and saving best fit model #",indx))
+      print("The best form is,")
+      print(best_mod_frm)
+      best_fit <-  gam(mod_frm, data=train, family = "tw")
+      # print(mod)
+      # print(stage)
+      # print(search$mod[indx])
+      # print(best_mod_frm)
+      output$exploratory[[mod]] <- list(best_mod = best_mod_frm,
                                                best_fit = best_fit,
-                                               grid_search = search))
+                                               grid_search = search)
     }
 
     if(mod=='rf'){
-      indx = which.min(search$rmse)
-      best_mod_frm <- mod_search$form[[mod]][[search$mod[indx]]] #Get the model index, not the grid index
-      best_mtry <- mod_search$args$rf$mtry[indx]
-      best_ntree <- mod_search$args$rf$ntree[indx]
+      #Get the model index for the model with the lowest RMSE
+      indx = search %>%
+        group_by(mod,mtry,ntree) %>%
+        summarise(mean = mean(rmse)) %>% #mean RMSE over n_test years
+        subset(mean == min(mean))#lowest RMSE
+      print(indx)
+      best_mod_frm <- mod_search$form[[mod]][[stage]][[indx$mod]] #Get the model index, not the grid index
+      best_mtry <- indx$mtry
+      best_ntree <- indx$ntree
 
-      output$exploratory[[mod]] <- append(output$exploratory[[mod]],
-                                          list(best_mtry = best_mtry,
+      output$exploratory[[mod]] <- list(best_mtry = best_mtry,
                                                best_ntree = best_ntree,
                                                best_mod = best_mod_frm,
-                                               train_data = train,
+                                               train_data = NA,
                                                best_fit = NA, #too much memory to save the best fit model
-                                               grid_search = search))
+                                               grid_search = search)
     }
 
     if(save_output){
+      print("saving output")
       save(output, file = paste0("output/output_",stage,".rdata"))
     }
   }
+  # return(output$exploratory[[mod]])
   return(output)
 }
 

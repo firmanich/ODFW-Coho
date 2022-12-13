@@ -1,15 +1,16 @@
 # spatial_index <- function(arg_no_covars=TRUE){
-#   library(sp)
-#   library(glmmTMB)
-#   library(raster)
-#   library(ggplot2)
-#   library(viridis)
-#   library(viridisLite)
-#   library(cowplot)
+  library(sp)
+  library(glmmTMB)
+  library(raster)
+  library(ggplot2)
+  library(viridis)
+  library(viridisLite)
+  library(cowplot)
+  library(RANN)
 #   
   
-  png('output/spatial_index2.png',
-      height = 600, width = 600, pointsize = 14)
+  # png('output/spatial_index2.png',
+  #     height = 600, width = 600, pointsize = 14)
   
   stage <- "Spwn" #rear or Spwn
   #Grab the data for stage
@@ -53,7 +54,7 @@
   pred1 <- exp(predict(fit, nd.df))
   p <- cbind(nd.df,pred1)
   # p <- cbind(df,pred) 
-  p$mod <- "GAM \n (mgcv)"
+  p$mod <- "GAMM \n (mgcv)"
   
   ff <- output$exploratory$rf$best_mod
   mtry <- output$exploratory$rf$best_mtry
@@ -97,7 +98,7 @@
   ag <- cbind(ag,
               odfw$Estimate[odfw$yr%in%ag$yr])
   names(ag)[ncol(ag)] <- "ODFW"
-  ag$stage <- "Spanwers"
+  ag$stage <- "Spawners"
   
 
   
@@ -141,7 +142,7 @@
   pred1 <- exp(predict(fit, nd.df))
   p <- cbind(nd.df,pred1)
   # p <- cbind(df,pred) 
-  p$mod <- "GAM \n (mgcv)"
+  p$mod <- "GAMM \n (mgcv)"
   
   ff <- output$exploratory$rf$best_mod
   mtry <- output$exploratory$rf$best_mtry
@@ -203,7 +204,7 @@
   
 
 
-  dev.off()
+  # dev.off()
 # 
 #   return(nd.df)  
 # }

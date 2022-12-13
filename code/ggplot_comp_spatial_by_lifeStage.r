@@ -10,8 +10,10 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
                                            save_to_file = FALSE,
                                            n_years_ahead = 0,
                                            comp_mods = c("gam","sdm","rf"),
+                                           save_raster = FALSE,
                                            n_test = 1,
-                                           test_years = 2019){
+                                           UTM_N_step = 1,
+                                           UTM_E_step = 1){
 
   library(sp)
   library(dplyr)
@@ -57,10 +59,10 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
       #Create projection grid
       x_seq <- seq(min(df$UTM_E_km),
                    max(df$UTM_E_km)*1.1,
-                   by = 2) #UTM N
+                   by = UTM_E_step) #UTM N
       y_seq <- seq(min(df$UTM_N_km),
                    max(df$UTM_N_km)*1.1,
-                   by = 5) #UTM N
+                   by = UTM_N_step) #UTM N
       vizloc_xy = expand.grid( x = x_seq, 
                                y = y_seq) #Spatial field
       vizloc_xy$p <- 1
@@ -140,7 +142,7 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
       # p.df[,'STRM_ORDER'] <- df[kmean$nn.idx,'STRM_ORDER']
       p.df$fSTRM_ORDER <- as.factor(p.df$STRM_ORDER)
       p.df$LifeStage <- stage
-      
+      ki <- 1
       for(k in comp_mods){
         print(k)
         #default fit is the best fit to the data
@@ -163,6 +165,7 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
                        pred)
             p$mod <- "GAM \n (mgcv)"
             p$frm <- f
+            j <- j + 1
           }else{
             tmp <- cbind(p.df[p.df$yr%in%plot_year,],
                          pred)
@@ -191,11 +194,20 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
                               mtry = mtry,
                               ntree = ntree,
                               data = df)
-          pred <- predict(fit, p.df[p.df$yr%in%plot_year,])
-          tmp <- cbind(p.df[p.df$yr%in%plot_year,],pred)
-          tmp$mod <- "Random forest \n (randomForest)"
-          tmp$frm <- f
-          p <- rbind(p,tmp)
+          if(j==1){
+            pred <- predict(fit, p.df[p.df$yr%in%plot_year,])
+            p <- cbind(p.df[p.df$yr%in%plot_year,],
+                       pred)
+            p$mod <- "Random forest \n (randomForest)"
+            p$frm <- f
+            j <- j + 1
+          }else{
+            pred <- predict(fit, p.df[p.df$yr%in%plot_year,])
+            tmp <- cbind(p.df[p.df$yr%in%plot_year,],pred)
+            tmp$mod <- "Random forest \n (randomForest)"
+            tmp$frm <- f
+            p <- rbind(p,tmp)
+          }
         }
         if(k=="sdm"){
           mesh <- make_mesh(df, c("UTM_E_km", "UTM_N_km"), cutoff = 10)
@@ -225,24 +237,32 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
                           silent=TRUE)
 
           }
-          pred<-exp(predict(fit, p.df)$est)
-          tmp <- cbind(p.df[p.df$yr%in%plot_year,],
-                       pred[p.df$yr%in%plot_year])
-          names(tmp)[ncol(tmp)] <- "pred"
-          tmp$mod <- "GLMM \n (sdmTMB)"
-          tmp$frm <- f
-          p <- rbind(p,tmp)
+          if(j==1){
+            pred<-exp(predict(fit, p.df)$est)[p.df$yr%in%plot_year]
+            p <- cbind(p.df[p.df$yr%in%plot_year,],
+                       pred)
+            p$mod <- "GLMM \n (sdmTMB)"
+            p$frm <- f
+            j <- j + 1
+          }else{
+            pred<-exp(predict(fit, p.df)$est)
+            tmp <- cbind(p.df[p.df$yr%in%plot_year,],
+                         pred[p.df$yr%in%plot_year])
+            names(tmp)[ncol(tmp)] <- "pred"
+            tmp$mod <- "GLMM \n (sdmTMB)"
+            tmp$frm <- f
+            p <- rbind(p,tmp)
+          }
         }
-        j <- j + 1
-      }
-    }
-  }#end form
+      }#comp mods
+    }#end frms 
+  }#end stages
   
   lr <- log(range(c(p$pred[p$yr%in%plot_year])))
-  
+
   p$LifeStage[p$LifeStage =='rear'] <- 'Juvenile'
   p$LifeStage[p$LifeStage =='Spwn'] <- 'Spawner'
-  
+
   g <- ggplot(p[p$yr%in%plot_year,],
                aes(x=UTM_E_km,y=UTM_N_km, fill=log(pred)),
                alpha=0.2) +
@@ -250,24 +270,42 @@ plot_comp_spatial_by_lifeStage <- function(plot_year = c(1998,2010,2019),
     facet_grid(myFacet) +
     # scale_fill_continuous()+
     scale_fill_viridis_c(option="inferno")+
-    theme(panel.grid.major = element_blank(), 
+    theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
-          panel.background = element_blank(), 
+          panel.background = element_blank(),
           axis.line = element_line(colour = "black"))+
     labs(fill = "log(#/km^2)\n", color = "log(# / km^2)\n")+
     ylab("Northing (km)") +
     xlab("Easting (km)")
-  
+
   if(save_to_file)
-    png(paste0('output/plot_comp_spatial_by_lifeStage_',stage,'.png'),
+    tiff(paste0('output/plot_comp_spatial_by_lifeStage_',stage,'.tiff'),
         height = 600, width = 600, pointsize = 14)
-  
+
   print(g)
 
   if(save_to_file)
     dev.off()
+
+  tmp_ras <- (p[,c('UTM_E_km','UTM_N_km','pred')])
+  names(tmp_ras) <- c('x','y','z')
+  coordinates(tmp_ras) <- ~x+y
+  gridded(tmp_ras) <- TRUE
+  tmp_ras <- raster(tmp_ras)
+
+  if(save_raster){
+    tiff(file = paste0("./output/",stages,comp_mods,frms,plot_year,".tiff"))
+    plot(tmp_ras)
+    dev.off()
+  }
   
-  return(list(p = p,
-              g = g))
+  return(list(
+              tmp_raster = tmp_ras,
+              tmp = tmp,
+              p = p,
+              p.df = p.df,
+              g = g
+              )
+         )
   
 }

@@ -1,10 +1,9 @@
 function_wrangle_data <- function(stage=NA,
-                                  output = output,
                                   dir = root){
   
   
   #Read in the juvenile data, change AUC.Mi to dens
-  juv <- read.csv(paste0(dir,'/data/JuvData.csv'), 
+  juv <- read.csv(paste0('C:/noaa/LARGE_Data/JuvData.csv'), 
                   header=TRUE,
                   dec=".",
                   stringsAsFactors = FALSE) %>% 
@@ -16,7 +15,7 @@ function_wrangle_data <- function(stage=NA,
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
   
   #Read in the spawner data, change AUC.Mi to dens
-  sp <- read.csv(paste0(dir,'/data/SpawnData.csv'),
+  sp <- read.csv(paste0('C:/noaa/LARGE_Data/SpawnData.csv'),
                  header=TRUE,
                  dec=".",
                  stringsAsFactors = FALSE) %>%
