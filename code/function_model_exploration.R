@@ -30,14 +30,16 @@ function_model_exploration <- function(stage = stage,
   bestAIC <- 1e6
   
   for(i in 1:nforms){
+    #grab the training data
     train <- dplyr::filter(df,
                           yr < (mod_search$args[[mod]]$test_years[i] - mod_search$args[[mod]]$n_years_ahead[i] + 1)) %>%
       dplyr::mutate(fYr = as.factor(yr))
-    
+
+    #Grab the test year: either the last year of the training data or projection year    
     test <- dplyr::filter(df, yr == mod_search$args[[mod]]$test_years[i]) %>%
       dplyr::mutate(fYr = as.factor(yr))
 
-
+    print(table(test$yr))
     #just use the same mesh for all sdm projections and explorations
     if(mod == 'sdm'){
       #For the sdmTMb package you have to predict over all years.
@@ -135,7 +137,9 @@ function_model_exploration <- function(stage = stage,
                     silent=TRUE)
         pred <- predict(fit, test, re_form_iid = NA)
         #Save the root mean square error in the search
-        search$rmse[i] = sqrt(mean((test$dens - exp(pred$est))^2))
+        # search$rmse[i] = sqrt(mean((test$dens - exp(pred$est))^2))
+        search$rmse[i] = sqrt(mean((test$dens[test$yr==mod_search$args[[mod]]$test_years[i]] -
+                                      exp(pred$est[test$yr==mod_search$args[[mod]]$test_years[i]]))^2))
         search$AIC[i] <- AIC(fit)
       }
 

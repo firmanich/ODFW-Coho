@@ -30,12 +30,7 @@ function_model_search <- function(test_years = test_years,
                      args = list(rf=list(), gam=list(), sdm = list()))
   
   rf_forms <- list(rear = list(
-      m1 = formula(gsub("[\r\n\t]", "","dens ~ yr +
-                                           UTM_E_km + 
-                                           UTM_N_km"))
-      ,m2 = formula(gsub("[\r\n\t]", "","dens ~ UTM_E_km + 
-                                           UTM_N_km"))
-      ,m3 = formula(gsub("[\r\n\t]", "","dens ~
+      m1 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -46,7 +41,7 @@ function_model_search <- function(test_years = test_years,
                       MWMT_Index +
                       W3Dppt + 
                       SprPpt"))
-      ,m4 = formula(gsub("[\r\n\t]", "","dens ~
+      ,m2 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -58,7 +53,7 @@ function_model_search <- function(test_years = test_years,
                       W3Dppt + 
                       SprPpt + 
                       yr"))
-      ,m5 = formula(gsub("[\r\n\t]", "","dens ~
+      ,m3 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -71,7 +66,7 @@ function_model_search <- function(test_years = test_years,
                       SprPpt + 
                       UTM_E_km +
                       UTM_N_km")) #Rf interactions are implicit
-      ,m6 = formula(gsub("[\r\n\t]", "","dens ~
+      ,m4 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -87,12 +82,7 @@ function_model_search <- function(test_years = test_years,
                       UTM_N_km")) #Rf interactions are implicit
     ),
     Spwn = list(
-      m1 = formula(gsub("[\r\n\t]", "","dens ~ yr +
-                                           UTM_E_km + 
-                                           UTM_N_km"))
-      ,m2 = formula(gsub("[\r\n\t]", "","dens ~UTM_E_km +
-                                           UTM_N_km"))
-      ,m3 = formula(gsub("[\r\n\t]", "","dens ~
+      m1 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -103,7 +93,7 @@ function_model_search <- function(test_years = test_years,
                       MWMT_Index +
                       W3Dppt + 
                       SprPpt"))
-      ,m4 = formula(gsub("[\r\n\t]", "","dens ~
+      ,m2 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -115,7 +105,7 @@ function_model_search <- function(test_years = test_years,
                       W3Dppt + 
                       SprPpt + 
                       yr"))
-      ,m5 = formula(gsub("[\r\n\t]", "","dens ~
+      ,m3 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -128,7 +118,7 @@ function_model_search <- function(test_years = test_years,
                       SprPpt + 
                       UTM_E_km +
                       UTM_N_km")) #Rf interactions are implicit
-      ,m6 = formula(gsub("[\r\n\t]", "","dens ~
+      ,m4 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -145,16 +135,13 @@ function_model_search <- function(test_years = test_years,
     ) #Rf interactions are implicit
   )  
 
-  if(no_covars){
-    rf_forms <- rf_forms[1]
-  }
   mod_search$form$rf <- rf_forms
   
   #create grid of models
   if(project){
     rf_args <- expand.grid(test_years = test_years,
                            n_years_ahead = n_years_ahead,
-                           mod = 1, #Why do you do this
+                           mod = 1, #Why do you do this? It's just a place holder. Make it less jinky
                            mtry = output$exploratory$rf$best_mtry, 
                            ntree = output$exploratory$rf$best_ntree)
   }else{
@@ -163,22 +150,34 @@ function_model_search <- function(test_years = test_years,
                            mod = 1:length(rf_forms[[1]]), 
                            mtry = seq(3,11,2), 
                            ntree = seq(200,1000,200)) # ,1000,200
-    if(no_covars){
-      rf_args <- expand.grid(test_years = test_years,
-                             n_years_ahead = n_years_ahead,
-                             mod = 1:1, 
-                             mtry = seq(3,11,2), 
-                             ntree = seq(200,1000,200)) # ,1000,200
-    }
   }
   mod_search$args$rf <- rf_args
   
   #Gam models
   gam_forms <-   list(rear = list(
     m1 = formula(gsub("[\r\n\t]", "","dens ~
-                                         s(UTM_E_km,UTM_N_km, yr)"))
+                      s(StrmSlope,k=4) +
+                      s(WidthM,k=4) +
+                      s(SolMean,k=4) +
+                      s(IP_COHO,k=4) +
+                      s(OUT_DIST,k=4) +
+                      s(StrmPow,k=4) +
+                      fSTRM_ORDER +
+                      s(W3Dppt, k = 4) +
+                      s(SprPpt, k = 4) +
+                      s(MWMT_Index,k=4) "))
     ,m2 = formula(gsub("[\r\n\t]", "","dens ~
-                                        s(UTM_E_km,UTM_N_km)"))
+                        s(StrmSlope,k=4) +
+                        s(WidthM,k=4) +
+                        s(SolMean,k=4) +
+                        s(IP_COHO,k=4) +
+                        s(OUT_DIST,k=4) +
+                        s(StrmPow,k=4) +
+                        fSTRM_ORDER +
+                        s(W3Dppt, k = 4) +
+                        s(SprPpt, k = 4) +
+                        s(MWMT_Index,k=4) +
+                       s(yr, k = 4)"))
     ,m3 = formula(gsub("[\r\n\t]", "","dens ~
                       s(StrmSlope,k=4) +
                       s(WidthM,k=4) +
@@ -189,21 +188,9 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
                       s(SprPpt, k = 4) +
-                      s(MWMT_Index,k=4) "))
-
+                      s(MWMT_Index,k=4) +
+                      s(UTM_E_km,UTM_N_km)"))
     ,m4 = formula(gsub("[\r\n\t]", "","dens ~
-                      s(yr) +
-                      s(StrmSlope,k=4) +
-                      s(WidthM,k=4) +
-                      s(SolMean,k=4) +
-                      s(IP_COHO,k=4) +
-                      s(OUT_DIST,k=4) +
-                      s(StrmPow,k=4) +
-                      fSTRM_ORDER +
-                      s(W3Dppt, k = 4) +
-                      s(SprPpt, k = 4) +
-                      s(MWMT_Index,k=4) "))
-    ,m5 = formula(gsub("[\r\n\t]", "","dens ~
                       s(StrmSlope,k=4) +
                       s(WidthM,k=4) +
                       s(SolMean,k=4) +
@@ -218,9 +205,28 @@ function_model_search <- function(test_years = test_years,
   ),  #This is NOT the same as the sdmTMB spatiotemporal. THis is a spline in three directions
   Spwn = list(
     m1 = formula(gsub("[\r\n\t]", "","dens ~
-                                         s(UTM_E_km,UTM_N_km, yr)"))
+                      s(StrmSlope,k=4) +
+                      s(WidthM,k=4) +
+                      s(SolMean,k=4) +
+                      s(IP_COHO,k=4) +
+                      s(OUT_DIST,k=4) +
+                      s(StrmPow,k=4) +
+                      fSTRM_ORDER +
+                      s(W3Dppt, k = 4) +
+                      s(SprPpt, k = 4) +
+                      s(MWMT_Index,k=4) "))
     ,m2 = formula(gsub("[\r\n\t]", "","dens ~
-                                        s(UTM_E_km,UTM_N_km)"))
+                        s(StrmSlope,k=4) +
+                        s(WidthM,k=4) +
+                        s(SolMean,k=4) +
+                        s(IP_COHO,k=4) +
+                        s(OUT_DIST,k=4) +
+                        s(StrmPow,k=4) +
+                        fSTRM_ORDER +
+                        s(W3Dppt, k = 4) +
+                        s(SprPpt, k = 4) +
+                        s(MWMT_Index,k=4) +
+                      s(yr, k = 4)"))
     ,m3 = formula(gsub("[\r\n\t]", "","dens ~
                       s(StrmSlope,k=4) +
                       s(WidthM,k=4) +
@@ -231,20 +237,9 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
                       s(SprPpt, k = 4) +
-                      s(MWMT_Index,k=4)"))
+                      s(MWMT_Index,k=4) +
+                      s(UTM_E_km,UTM_N_km)"))
     ,m4 = formula(gsub("[\r\n\t]", "","dens ~
-                                         s(yr) +
-                      s(StrmSlope,k=4) +
-                      s(WidthM,k=4) +
-                      s(SolMean,k=4) +
-                      s(IP_COHO,k=4) +
-                      s(OUT_DIST,k=4) +
-                      s(StrmPow,k=4) +
-                      fSTRM_ORDER +
-                      s(W3Dppt, k = 4) +
-                      s(SprPpt, k = 4) +
-                      s(MWMT_Index,k=4)"))
-    ,m5 = formula(gsub("[\r\n\t]", "","dens ~
                       s(StrmSlope,k=4) +
                       s(WidthM,k=4) +
                       s(SolMean,k=4) +
@@ -255,13 +250,9 @@ function_model_search <- function(test_years = test_years,
                       s(W3Dppt, k = 4) +
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) +
-                       s(UTM_E_km,UTM_N_km, yr)"))
-    
+                      s(UTM_E_km,UTM_N_km, yr)"))
+    )
   )
-  )
-  if(no_covars){
-    gam_forms <- gam_forms[1]
-  }
   
   # print(length(gam_forms[[1]]))
   mod_search$form$gam <- gam_forms
@@ -281,8 +272,7 @@ function_model_search <- function(test_years = test_years,
   
   #sdm search
   sdm_forms <- list(rear = list(                  
-                    m1 = formula(gsub("[\r\n\t]", "","dens ~ 1")),
-                    m2 = formula(gsub("[\r\n\t]", "","dens ~ 1 +
+                    m1 = formula(gsub("[\r\n\t]", "","dens ~ 1 +
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -294,10 +284,22 @@ function_model_search <- function(test_years = test_years,
                       W3Dppt + 
                       SprPpt
                         "))
+                    ,m2 = formula(gsub("[\r\n\t]", "","dens ~ 1 +
+                      StrmSlope +
+                      WidthM +
+                      SolMean +
+                      IP_COHO +
+                      OUT_DIST +
+                      StrmPow +
+                      fSTRM_ORDER +
+                      MWMT_Index +
+                      W3Dppt + 
+                      SprPpt + 
+                      (1|fYr)
+                        "))
   ),
   Spwn = list(
-    m1 = formula(gsub("[\r\n\t]", "","dens ~ 1")),
-    m2 = formula(gsub("[\r\n\t]", "","dens ~ 1 +
+    m1 = formula(gsub("[\r\n\t]", "","dens ~ 1 +
                       StrmSlope +
                       WidthM +
                       SolMean +
@@ -309,13 +311,22 @@ function_model_search <- function(test_years = test_years,
                       W3Dppt + 
                       SprPpt 
                         "))
-    
+    ,m2 = formula(gsub("[\r\n\t]", "","dens ~ 1 +
+                      StrmSlope +
+                      WidthM +
+                      SolMean +
+                      IP_COHO +
+                      OUT_DIST +
+                      StrmPow +
+                      fSTRM_ORDER +
+                      MWMT_Index +
+                      W3Dppt + 
+                      SprPpt +
+                      (1|fYr)
+                        "))
   )
   
   )
-  if(no_covars){
-    sdm_forms <- sdm_forms[1]
-  }
   mod_search$form$sdm <- sdm_forms
   
   #create grid of models
@@ -332,13 +343,6 @@ function_model_search <- function(test_years = test_years,
                             sp = c(TRUE,FALSE), 
                             st = c("iid",FALSE)
     )
-    if(no_covars){
-      sdm_args <- expand.grid(test_years = test_years,
-                              n_years_ahead = n_years_ahead,
-                              mod = 1:1, 
-                              sp = c(TRUE), 
-                              st = c("iid"))
-    }
   }
   
   mod_search$args$sdm <- sdm_args

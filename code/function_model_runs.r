@@ -4,7 +4,7 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
                                 stage = 'rear', #Which stage rear or Spwn
                                 mod = c('rf'), # the type of model 'rf', 'gam', 'glm'
                                 n_years_ahead = c(0), #predictions into the future
-                                n_test = 1)
+                                n_test = 1){
   #Katie and I are working on the doc.
   library(dplyr)
   library(tidyr)
@@ -30,6 +30,7 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
   print("wrangle data")
   df <- function_wrangle_data(stage=stage,
                               dir = root)
+  # print(head(df))
   #These are the tested years, as opposed to the training years
   test_years = seq(max(df$yr)-n_test+1, max(df$yr))
 

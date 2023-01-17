@@ -1,39 +1,85 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(grid)
+
 #Run through models
-stage <- "rear"
-load(paste0("output/output_",stage,".rData"))
-
-gam <- (output$project$gam$grid_search) %>%  
-  mutate(mod = "GAMM ") %>% 
-  dplyr::select(c(mod,n_years_ahead,rmse))
-
-sdm <- (output$project$sdm$grid_search) %>%  
-  mutate(mod = "GLMM ") %>% 
-  dplyr::select(c(mod,n_years_ahead,rmse))
-
-rf <- output$project$rf$grid_search %>%  
-  mutate(mod = "Random forest ") %>% 
-  dplyr::select(c(mod,n_years_ahead,rmse))
-
-
-rmse_mean <- dplyr::bind_rows(gam,sdm,rf) %>% 
-  dplyr::group_by(mod,n_years_ahead) %>%
-  dplyr::summarise(rmse = mean(rmse))
-
-ifelse(stage=="rear", lims <- c(350,380), lims <- c(19,31))
-
-g <- ggplot(aes(y = rmse, x = mod, fill = as.factor(n_years_ahead)), 
-            data = rmse_mean[rmse_mean$n_years_ahead!=0,]) + 
-  geom_bar(position="dodge", stat="identity") +
-  ylab("Mean RMSE 2015 to 2019") +
-  xlab(" Model ") +
-  guides(fill=guide_legend(title="Number of \nyears ahead")) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-  coord_cartesian(ylim=lims)
+plotlist <- list()
+icnt <- 1
+for(i in c('rear', 'Spwn')){
+  stage <- i
+  load(paste0("output/output_",stage,".rData"))
   
-png("output/ggplot_predictive_rmse_2015_2019.png", height = 400, width = 600)
-print(g)
-dev.off()
+  rf <- output$exploratory$rf$grid_search %>%
+    mutate(model = 'Random forest') %>%
+    group_by(model,mod,mtry,ntree) %>%
+    summarise(rmse_mean = mean(rmse)) %>%
+    group_by(model) %>%
+    filter(rmse_mean == min(rmse_mean)) %>%
+    select(model,rmse_mean)
+
+  sdm <- (output$exploratory$sdm$grid_search) %>%  
+    mutate(model = "GLMM") %>% 
+    group_by(model,mod,st,sp) %>%
+    summarise(rmse_mean = mean(rmse)) %>%
+    group_by(model) %>%
+    filter(rmse_mean == min(rmse_mean)) %>%
+    select(model,rmse_mean)
+
+  gam <- output$exploratory$gam$grid_search %>%  
+    mutate(model = 'GAMM') %>%
+    group_by(model,mod) %>%
+    summarise(rmse_mean = mean(rmse)) %>%
+    group_by(model) %>%
+    filter(rmse_mean == min(rmse_mean)) %>%
+    select(model,rmse_mean)
+  
+  rmse_mean1 <- dplyr::bind_rows(gam,sdm,rf) %>% 
+    dplyr::group_by(model) %>%
+    mutate(n_years_ahead = 0) %>%
+    relocate(n_years_ahead, .after = model)
+  
+  gam <- (output$project$gam$grid_search) %>%  
+    mutate(model = "GAMM") %>% 
+    dplyr::select(c(model,n_years_ahead,rmse))
+  
+  sdm <- (output$project$sdm$grid_search) %>%  
+    mutate(model = "GLMM") %>% 
+    dplyr::select(c(model,n_years_ahead,rmse))
+  
+  rf <- output$project$rf$grid_search %>%  
+    mutate(model = "Random forest") %>% 
+    dplyr::select(c(model,n_years_ahead,rmse))
+  
+  
+  rmse_mean <- dplyr::bind_rows(gam,sdm,rf) %>% 
+    dplyr::group_by(model,n_years_ahead) %>%
+    dplyr::summarise(rmse_mean = mean(rmse)) %>%
+    dplyr::bind_rows(rmse_mean1)
+  
+  ifelse(stage=="rear", lims <- c(140,380), lims <- c(8,31))
+  
+  plotlist[[icnt]] <- ggplot(aes(y = rmse_mean, x = model, fill = as.factor(n_years_ahead)), 
+               data = rmse_mean[,]) + 
+    geom_bar(position="dodge", stat="identity") +
+    scale_fill_grey()+
+    ylab("") +
+    xlab("") +
+    guides(fill=guide_legend(title="Number of \nyears ahead")) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+    coord_cartesian(ylim=lims)
+  icnt <- icnt + 1
+}
+
+gg <- ggpubr::ggarrange(plotlist = plotlist,
+                        ncol = 2,
+                        legend = 'right',
+                        labels = c("A","B"),
+                        common.legend = TRUE)
+
+gg <- ggpubr::annotate_figure(gg,
+                left = ggpubr::text_grob("Mean RMSE 2015 to 2019", color = "black", rot = 90),
+                fig.lab = "", fig.lab.face = "bold")
+
+print(gg)

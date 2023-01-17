@@ -48,7 +48,8 @@
     }
   }
   nd.df$fSTRM_ORDER <- as.factor(nd.df$STRM_ORDER)
-
+  levels(nd.df$fSTRM_ORDER) <- levels(df$fSTRM_ORDER)
+  
   fit <- output$exploratory$gam$best_fit
   # pred <- exp(predict(fit, df))#
   pred1 <- exp(predict(fit, nd.df))
@@ -65,7 +66,7 @@
                       data = df)
   pred1 <- predict(fit, nd.df)
   tmp <- cbind(nd.df,pred1)
-  tmp$mod <- "Random forest \n (randomForest)"
+  tmp$mod <- "RF \n (randomForest)"
   p <- rbind(p,tmp)
   # 
   
@@ -135,6 +136,7 @@
     }
   }
   nd.df$fSTRM_ORDER <- as.factor(nd.df$STRM_ORDER)
+  levels(nd.df$fSTRM_ORDER) <- levels(df$fSTRM_ORDER)
   
   
   fit <- output$exploratory$gam$best_fit

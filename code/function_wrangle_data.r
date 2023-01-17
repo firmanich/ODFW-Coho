@@ -27,7 +27,7 @@ function_wrangle_data <- function(stage=NA,
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
   
   #row bind the data based on common column headings
-  depVars <- c('STRM_ORDER','LifeStage','dens','yr','PopGrp')
+  depVars <- c('STRM_ORDER','LifeStage','dens','yr','PopGrp','ID_Num')
   coVars <- c('UTM_E','UTM_N'
               ,'WidthM','W3Dppt',
               'MWMT_Index','StrmPow',
@@ -47,6 +47,7 @@ function_wrangle_data <- function(stage=NA,
     mutate_at(all_of(coVars), ~replace_na(.,mean(., na.rm = TRUE))) %>% #get rid of NAs, a little TOO CLUTCHY
     mutate(UTM_E_km = UTM_E/1000, #Rescale
            UTM_N_km = UTM_N/1000, #Rescale
+           # ID_Num = ID_Num,
            fYr = as.factor(yr),
            fSTRM_ORDER = as.factor(STRM_ORDER),
            StrmPow = scale_this(StrmPow),
@@ -61,7 +62,9 @@ function_wrangle_data <- function(stage=NA,
     )
   
   # df <- df[df$UTM_E_km!=0,]
+  df <- df[abs(df$W3Dppt)<=4,]
   df <- na.omit(df) #Necessary to get Spwn data to work.
+  
   return(df)
   
 }
