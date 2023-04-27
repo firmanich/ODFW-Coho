@@ -1,7 +1,9 @@
 function_wrangle_data <- function(stage=NA,
                                   dir = root){
   
-  
+
+  library(dplyr)
+  library(tidyr)
   #Read in the juvenile data, change AUC.Mi to dens
   juv <- read.csv(paste0('C:/noaa/LARGE_Data/JuvData.csv'), 
                   header=TRUE,

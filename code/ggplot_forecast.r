@@ -26,10 +26,10 @@ load(paste0("output/output_",stage,".rData"))
 SprPpt <- read.csv("./data/precip.csv")
 MWMT <- read.csv("./data/MWMT_Indx_2080_spwn.csv")
 
-sc <- scale(df_f$SprPpt)
+sc <- scale(df_f$SprPpt[df_f$SprPpt!=(-9999.0)])
 sc_MW <- scale(df_f$MWMT_Index)
-hist(df_f$SprPpt/10)
-hist(df_f$MWMT_Index)
+
+#Match up the SprPpt ID with the data IDs
 spr_sp <- SprPpt$Spring[match(df$ID_Num[df$yr==2019],SprPpt$IDNUM[SprPpt$year==2019])]
 mwmt <- MWMT$MWMT_Indx2080[match(df$ID_Num[df$yr==2019],MWMT$SiteID)]
 
@@ -42,10 +42,6 @@ nd.df[,names(df)[!names(df)%in%names(nd.df)]] <- 0 #add all of the column headin
 nd.df <- do.call("rbind", replicate(length(unique(df$yr)), nd.df, simplify = FALSE))
 nd.df$yr <- rep(unique(df$yr),each=nd)
 nd.df$fYr <- as.factor(nd.df$yr)
-
-#Use kmeans to map the stream in the original data frame to 
-#the prediction dataframe
-# kmean <- nn2(df[,c('UTM_E','UTM_N')],nd.df[,c('UTM_E','UTM_N')], k=1)
 
 coVars <- c('WidthM','W3Dppt',
             'MWMT_Index','StrmPow',
@@ -112,19 +108,24 @@ tmp <- nd.df %>%
             UTM_E_km_2019 = sum(UTM_E_km*pred_2019)/sum(pred_2019),
             UTM_E_km_diff = sum(UTM_E_km*pred_2080)/sum(pred_2080) - sum(UTM_E_km*pred_2019)/sum(pred_2019),
             UTM_N_km_diff = sum(UTM_N_km*pred_2080)/sum(pred_2080) - sum(UTM_N_km*pred_2019)/sum(pred_2019),
-            ratio = sum(pred_2080)/sum(pred_2019)
+            ratio = sum(pred_2080)/sum(pred_2019),
   )%>%
   mutate(data = 'Observed locations')) %>%
   pivot_longer(!c(PopGrp,data), names_to = "Year", values_to = "Index")
 
-  g1 <- ggplot(tmp[tmp$Year=="ratio",], aes(x = PopGrp, y = Index, fill = data)) +
+  g1 <- ggplot(tmp[tmp$Year=="ratio" & tmp$data=="Observed locations",], aes(x = PopGrp, y = Index, fill = data)) +
     # facet_wrap(~data, nrow = 2, scales = "free") +
     theme_bw()   +
     # scale_y_continuous(limits = c(0.6,1.2)) +
-    geom_bar(position = 'dodge',stat = "identity") +
+    ylab("2080:2019 ratio of abundance index") +
+    xlab("") +
+    geom_bar(position = 'dodge',stat = "identity", fill = "grey") +
+    scale_y_continuous(expand = c(0, 0)) +
     theme(axis.text.x=element_text(angle = -90, hjust = 0)) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.3, hjust = 1)) +
-    geom_hline(yintercept = 1)
+    geom_hline(yintercept = 1) +
+    theme(legend.position = 'none')
+    
   
   g3 <- ggplot(tmp[tmp$Year=="UTM_E_km_diff" | tmp$Year=="UTM_N_km_diff",], aes(x = PopGrp, y = Index, fill = data)) +
     facet_wrap(~Year, nrow = 2, scales = "free") +
@@ -216,18 +217,18 @@ tmp <- nd.df %>%
   df <- cbind(df[!is.na(tmp_df$SprPpt),],pred_2019,pred_2080)
   df$ESU <- "Oregon"
   
-  tmp <- nd.df %>%
-    filter(yr == 2019) %>%
-    group_by(PopGrp) %>%
-    summarise(mean_2019 = sum(pred_nd_2019),
-              mean_2080 = sum(pred_nd_2080),
-              UTM_E_km_2080 = sum(UTM_E_km*pred_nd_2080)/sum(pred_nd_2080),
-              UTM_E_km_2019 = sum(UTM_E_km*pred_nd_2019)/sum(pred_nd_2019),
-              UTM_E_km_diff = sum(UTM_E_km*pred_nd_2080)/sum(pred_nd_2080) - sum(UTM_E_km*pred_nd_2019)/sum(pred_nd_2019),
-              UTM_N_km_diff = sum(UTM_N_km*pred_nd_2080)/sum(pred_nd_2080) - sum(UTM_N_km*pred_nd_2019)/sum(pred_nd_2019),
-              ratio = sum(pred_nd_2080)/sum(pred_nd_2019)
-    )  %>%
-    mutate(data = 'Watershed') %>%
+  tmp <- #nd.df %>%
+    # filter(yr == 2019) %>%
+    # group_by(PopGrp) %>%
+    # summarise(mean_2019 = sum(pred_nd_2019),
+    #           mean_2080 = sum(pred_nd_2080),
+    #           UTM_E_km_2080 = sum(UTM_E_km*pred_nd_2080)/sum(pred_nd_2080),
+    #           UTM_E_km_2019 = sum(UTM_E_km*pred_nd_2019)/sum(pred_nd_2019),
+    #           UTM_E_km_diff = sum(UTM_E_km*pred_nd_2080)/sum(pred_nd_2080) - sum(UTM_E_km*pred_nd_2019)/sum(pred_nd_2019),
+    #           UTM_N_km_diff = sum(UTM_N_km*pred_nd_2080)/sum(pred_nd_2080) - sum(UTM_N_km*pred_nd_2019)/sum(pred_nd_2019),
+    #           ratio = sum(pred_nd_2080)/sum(pred_nd_2019)
+    # )  %>%
+    # mutate(data = 'Watershed') %>%
     bind_rows(
       df %>%
                 filter(yr == 2019) %>%
@@ -243,22 +244,27 @@ tmp <- nd.df %>%
                 mutate(data = 'Observed locations'))%>%
     pivot_longer(!c(PopGrp,data), names_to = "Year", values_to = "Index")
   
-
-  g2 <- ggplot(tmp[tmp$Year=="ratio",], aes(x = PopGrp, y = Index, fill = data)) +
+  mean(tmp[tmp$Year=="ratio" & tmp$data=="Observed locations",]$Index)
+  
+  g2 <- ggplot(tmp[tmp$Year=="ratio" & tmp$data=="Observed locations",], aes(x = PopGrp, y = Index, fill = data)) +
     # facet_wrap(~data, nrow = 2, scales = "free") +
     theme_bw()   +
     # scale_y_continuous(limits = c(0.6,1.2)) +
-    ylab("Index ratio") + 
-    geom_bar(position = 'dodge',stat = "identity") +
+    ylab("2080:2019 ratio of abundance index") +
+    xlab("") +
+    geom_bar(position = 'dodge',stat = "identity", fill = "grey") +
+    scale_y_continuous(expand = c(0, 0)) +
     theme(axis.text.x=element_text(angle = -90, hjust = 0)) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.3, hjust = 1)) +
-    geom_hline(yintercept = 1)
+    geom_hline(yintercept = 1) +
+    theme(legend.position = 'none')
 
   g4 <- ggplot(tmp[tmp$Year=="UTM_E_km_diff" | tmp$Year=="UTM_N_km_diff",], aes(x = PopGrp, y = Index, fill = data)) +
     facet_wrap(~Year, nrow = 2, scales = "free") +
     theme_bw()   +
     # scale_y_continuous(limits = c(0.6,1.2)) +
     ylab("Kilometers") + 
+    scale_y_continuous(expand = c(0, 0)) +
     geom_bar(position = 'dodge',stat = "identity") +
     theme(axis.text.x=element_text(angle = -90, hjust = 0)) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.3, hjust = 1)) 

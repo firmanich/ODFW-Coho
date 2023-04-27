@@ -6,6 +6,8 @@ library(ggplot2)
 library(viridis)
 library(viridisLite)
 library(cowplot)
+library(tidyr)
+library(dplyr)
 #Predict the spatiotemporal effects for 2019
 
 #Before we can plot the predictions, we have to do a couple of this
@@ -57,17 +59,18 @@ no_covars <- TRUE
 
 #Loop over the two stage in the life history
 for(myStage in c('rear')){
+  myStage <- 'rear'
   stage <- myStage
-  source("wrangle_data.r")
-  df <- wrangle_data(stage = myStage)
+  source("./code/function_wrangle_data.r")
+  df <- function_wrangle_data(stage = myStage)
   if(no_covars){
-    load(paste0("output/output_st_",stage,".rData"))
+    load(paste0("./output/output_st_",stage,".rData"))
   }else{
-    load(paste0("output/output_",stage,".rData"))
+    load(paste0("./output/output_",stage,".rData"))
   }
   
   #Subset by unique locations, non-duplicated df
-  nd.df <- df[!duplicated(df[,c('UTM_E_km','UTM_N_km')]),c('UTM_E_km','UTM_N_km')]
+  nd.df <- df[!duplicated(df[,c('UTM_E_km','UTM_N_km')]) & df$PopGrp=="Siletz",c('UTM_E_km','UTM_N_km')]
   nd <- nrow(nd.df)
   print(nd)
   nd.df$UTM_E <- nd.df$UTM_E_km * 1000
@@ -79,20 +82,20 @@ for(myStage in c('rear')){
   nd.df$yr <- rep(unique(df$yr),each=nd)
   nd.df$fYr <- as.factor(nd.df$yr)
   
-  fit <- output$exploratory$gam$best_fit
-  pred <- exp(predict(fit, nd.df))
-  p <- cbind(nd.df,pred)
-  p$mod <- "GAM \n (mgcv)"
-  
-  fit <- output$exploratory$rf$best_fit
-  pred <- predict(fit, nd.df)
-  tmp <- cbind(nd.df,pred)
-  tmp$mod <- "Random forest \n (randomForest)"
-  p <- rbind(nd.df,tmp)
+  # fit <- output$exploratory$gam$best_fit
+  # pred <- exp(predict(fit, nd.df))
+  # p <- cbind(nd.df,pred)
+  # p$mod <- "GAM \n (mgcv)"
+  # 
+  # fit <- output$exploratory$rf$best_fit
+  # pred <- predict(fit, nd.df)
+  # tmp <- cbind(nd.df,pred)
+  # tmp$mod <- "Random forest \n (randomForest)"
+  # p <- rbind(nd.df,tmp)
   # 
   
-  # fit <- output$exploratory$sdm$best_fit
-  # pred<-exp(predict(fit, df)$est)
+  fit <- output$exploratory$sdm$best_fit
+  pred<-exp(predict(fit, nd.df)$est)
   # tmp <- cbind(nd.df,pred)
   # tmp$mod <- "GLMM \n (sdmTMB)"
   # assign(myStage,na.omit(rbind(p,tmp)))

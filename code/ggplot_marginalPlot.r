@@ -1,51 +1,80 @@
-load("C:/noaa/projects/ODFW-Coho/output/output.rData")
+Life_stage <- "rear"
 
 
-marVars <- c('WidthM','W3Dppt',
-            'MWMT_Index','StrmPow',
-            'SprPpt','IP_COHO', 
-            'SolMean','StrmSlope',
-            'OUT_DIST')
+load(paste0("C:/noaa/projects/ODFW-Coho/output/output_",Life_stage,".rData"))
 
-df_raw <- read.csv("juvData.csv")
 
-par(mfrow=c(2,2))
 
-for(i in marVars[1:4]){
-  df_tmp <- df
-  testYr <- 2019
-  bool <- df_tmp$JuvYr==testYr
+marVars <- c('StrmSlope','WidthM','SolMean','IP_COHO','OUT_DIST','StrmPow','MWMT_Index','W3Dppt','SprPpt')
+
+# df_raw <- read.csv("juvData.csv")
+
+par(mfrow=c(3,3))
+g <- list()
+icnt<- 1
+testYr <- 2019
+x <- list()
+ 
+for(i in marVars){
+  # i <- marVars[1]
+  df_tmp <-   df <- function_wrangle_data(stage=Life_stage,
+                                          dir = root)
+
+  nyears <- unique(df$yr[df$yr!=testYr])
+  bool <- df_tmp$yr==testYr
   df_tmp$UTM_E_km[bool] <- mean(df$UTM_E_km[bool])
   df_tmp$UTM_N_km[bool] <- mean(df$UTM_N_km[bool])
-  df_tmp$STRM_ORDER[bool] <- 1
-  df_tmp$fSTRM_ORDER[bool] <- as.factor(df_tmp$STRM_ORDER[bool])
   df_tmp[bool,marVars] <- 0    
+  df_tmp$STRM_ORDER[bool] <- 3
+  df_tmp$fSTRM_ORDER[bool] <- as.factor(df_tmp$STRM_ORDER[bool])
   df_tmp[bool,i] <- seq(min(df[,i]),max(df[,i]),length.out=sum(bool))    
-  p <- list(gam=exp(predict(output$exploratory$gam$best_fit,df_tmp[bool,])),
-             # rf = partial(output$exploratory$rf$best_fit,pred.var=as.character(i),ice=TRUE),
-             sdm = exp(predict(output$exploratory$sdm$best_fit,df_tmp)$est[bool]))
   
-  xx <- df_tmp[bool,i]*sd(na.omit(df_raw[bool,i]))+mean(na.omit(df_raw[bool,i]))
+  df_nbool <- df_tmp[!bool,]  
+  df_tmp <- df_tmp[bool,]  
   
-  # autoplot(p$rf, alpha=0.1)
+  df_tmp2 <- df_tmp[1:length(nyears),]
+  df_tmp2$yr <- nyears
+  df_tmp2$fYr <- as.factor(df_tmp2$yr)
+  df_tmp <- rbind(df_tmp2, df_tmp)
   
-  q <- quantile(df[,i]*sd(na.omit(df_raw[bool,i]))+mean(na.omit(df_raw[bool,i])), probs=c(0.1,0.9))
-  matplot(df[,i]*sd(na.omit(df_raw[bool,i]))+mean(na.omit(df_raw[bool,i])),
-            log(df$Juv.km),
-            pch=16,
-            xlim = q,
-            col=alpha("lightgrey",0.2))
-  matlines(xx,
-       log(cbind(p$gam,p$sdm)),
-       type="l",
-       lty=1,
-       col=1:2,
-       lwd=3,
-       xlab=i,
-       ylab="Juv/km")
-  #Just pick the 90% quartiles for the data
-  #Plot the s.e for the lines.
+  x[[icnt]] <- predict(output$exploratory$sdm$best_fit, newdata =  df_tmp, se_fit = TRUE)
+  x[[icnt]]$x <- df_tmp[,i]
   
+  x[[icnt]] <- x[[icnt]][x[[icnt]][,i]>(-2) & x[[icnt]][,i]<(5), ]
+  
+  print(paste(i, dim(x)))
+  q <- quantile(x$est, probs=c(0.1,0.9))
+  library(ggplot2)
+  g[[icnt]] <- ggplot2::ggplot(x[[icnt]][x[[icnt]]$yr==2019,],aes(x = x, y = exp(est - 0.5*est_se^2))) +
+    geom_line() +
+    geom_ribbon(aes(ymin = exp(est - 0.5*est_se^2) - 1.64*exp(est)*est_se, 
+                    ymax = exp(est - 0.5*est_se^2) + 1.64*exp(est)* est_se),
+                alpha = 0.2) +
+    theme_bw() +
+    xlab(paste(i))
+  
+  # hist()
+  
+  if(Life_stage=="Spwn"){
+    g[[icnt]] <- g[[icnt]] +
+      ylim(-10,25) +
+      ylab("Spawner density (#/mi)")
+  }else{
+    g[[icnt]] <- g[[icnt]] +
+      ylim(0,1000) +
+      ylab("Juvenile density (#/km)")
+  }
+
+  icnt <- icnt + 1
 }
 
+gg <- ggpubr::ggarrange(plotlist = g)
 
+ggsave(paste0("ggplot_marginalPlot_",Life_stage,".png"), plot= gg, device = "png")
+
+print(gg)
+
+xx <- x[[1]][x[[1]]$yr==2019,]
+# require(grid)
+# ggpubr::annotate_figure(gg, left = textGrob("Common y-axis", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
+#                 bottom = textGrob("Common x-axis", gp =  gpar(cex = 1.3)))
