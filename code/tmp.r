@@ -7,7 +7,8 @@ source("./code/function_model_exploration.r")
 require(sdmTMB)
 library(tidyr)
 library(dplyr)
-  
+ 
+ 
 for(mm in c('gam','sdm','rf')){ #model
   for(ss in c('rear','Spwn')){ #life stage
     for(si in c('Temporal_',"survey_")){ #testing models based on survey design or temporal forecasting
