@@ -1,5 +1,7 @@
 function_model_search <- function(test_years = test_years,
                                 n_years_ahead = n_years_ahead,
+                                survey_projection = survey_projection,
+                                survey_type = survey_type,
                                 project = FALSE,
                                 no_covars = TRUE,
                                 output = NA){
@@ -144,6 +146,15 @@ function_model_search <- function(test_years = test_years,
                            mod = 1, #Why do you do this? It's just a place holder. Make it less jinky
                            mtry = output$exploratory$rf$best_mtry, 
                            ntree = output$exploratory$rf$best_ntree)
+    if(survey_projection){
+      rf_args <- expand.grid(test_years = test_years,
+                             n_years_ahead = n_years_ahead,
+                             mod = 1, #Why do you do this? It's just a place holder. Make it less jinky
+                             mtry = output$exploratory$rf$best_mtry, 
+                             ntree = output$exploratory$rf$best_ntree,
+                             survey_type = survey_type)
+    }
+    
   }else{
     rf_args <- expand.grid(test_years = test_years,
                            n_years_ahead = n_years_ahead,
@@ -201,7 +212,19 @@ function_model_search <- function(test_years = test_years,
                       s(W3Dppt, k = 4) +
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) +
-                      s(UTM_E_km,UTM_N_km, yr)"))
+                      s(UTM_E_km,UTM_N_km,yr)"))
+    ,m5 = formula(gsub("[\r\n\t]", "","dens ~
+                      s(StrmSlope,k=4) +
+                      s(WidthM,k=4) +
+                      s(SolMean,k=4) +
+                      s(IP_COHO,k=4) +
+                      s(OUT_DIST,k=4) +
+                      s(StrmPow,k=4) +
+                      fSTRM_ORDER +
+                      s(W3Dppt, k = 4) +
+                      s(SprPpt, k = 4) +
+                      s(MWMT_Index,k=4) +
+                      s(UTM_E_km,UTM_N_km) + s(yr, k = 4)"))
   ),  #This is NOT the same as the sdmTMB spatiotemporal. THis is a spline in three directions
   Spwn = list(
     m1 = formula(gsub("[\r\n\t]", "","dens ~
@@ -251,7 +274,19 @@ function_model_search <- function(test_years = test_years,
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) +
                       s(UTM_E_km,UTM_N_km, yr)"))
-    )
+    ,m5 = formula(gsub("[\r\n\t]", "","dens ~
+                      s(StrmSlope,k=4) +
+                      s(WidthM,k=4) +
+                      s(SolMean,k=4) +
+                      s(IP_COHO,k=4) +
+                      s(OUT_DIST,k=4) +
+                      s(StrmPow,k=4) +
+                      fSTRM_ORDER +
+                      s(W3Dppt, k = 4) +
+                      s(SprPpt, k = 4) +
+                      s(MWMT_Index,k=4) +
+                      s(UTM_E_km,UTM_N_km) + s(yr, k = 4)"))
+  )
   )
   
   # print(length(gam_forms[[1]]))
@@ -263,6 +298,12 @@ function_model_search <- function(test_years = test_years,
     gam_args <- expand.grid(test_years = test_years,
                             n_years_ahead = n_years_ahead,
                             mod = 1)
+    if(survey_projection){
+      gam_args <- expand.grid(test_years = test_years,
+                              n_years_ahead = n_years_ahead,
+                              mod = 1,
+                              survey_type = survey_type)
+    }
   }else{
     gam_args <- expand.grid(test_years = test_years,
                             n_years_ahead = n_years_ahead,
@@ -335,7 +376,17 @@ function_model_search <- function(test_years = test_years,
                             n_years_ahead = n_years_ahead,
                             mod = 1, 
                             sp = output$exploratory$sdm$best_sp, 
-                            st = output$exploratory$sdm$best_st)
+                            st = output$exploratory$sdm$best_st,
+                            survey_type = NA)
+    if(survey_projection){
+      sdm_args <- expand.grid(test_years = test_years,
+                              n_years_ahead = n_years_ahead,
+                              mod = 1, 
+                              sp = output$exploratory$sdm$best_sp, 
+                              st = output$exploratory$sdm$best_st,
+                              survey_type = survey_type)
+      
+    }
   }else{
     sdm_args <- expand.grid(test_years = test_years,
                             n_years_ahead = n_years_ahead,

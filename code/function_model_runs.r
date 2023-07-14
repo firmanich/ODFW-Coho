@@ -4,7 +4,9 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
                                 stage = 'rear', #Which stage rear or Spwn
                                 mod = c('rf'), # the type of model 'rf', 'gam', 'glm'
                                 n_years_ahead = c(0), #predictions into the future
-                                n_test = 1){
+                                n_test = 1,
+                                survey_projection = FALSE,
+                                survey_type = survey_type){
   #Katie and I are working on the doc.
   library(dplyr)
   library(tidyr)
@@ -15,16 +17,6 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
   #Load the dependent functions
   root <- getwd()
   
-  #load output
-  # stage <- "rear"
-  # n_test <- 1
-  # n_years_ahead <- 0
-  # project <- FALSE
-  # no_covars <- FALSE
-  # mod <- "gam"
-  # save_output <- TRUE
-  print("load input")
-  # load(file = paste0("output/output_",stage,".rdata"))
 
   #Grab the data for stage
   print("wrangle data")
@@ -34,29 +26,28 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
   #These are the tested years, as opposed to the training years
   test_years = seq(max(df$yr)-n_test+1, max(df$yr))
 
+  # print("test_years from run model")
+  # print(test_years)
+  
   #tagged list of model arguments and models to search over
   print("create model search")
   mod_search <- function_model_search(test_years = test_years,
                                       n_years_ahead = n_years_ahead,
                                       project = project,
+                                      survey_projection = survey_projection,
+                                      survey_type = survey_type,
                                       no_covars = no_covars,
                                       output = output)
 
-  print(mod_search)
   #Output of model exploration
   print("run model exploration")
   function_model_exploration(stage=stage, #Stage
                                mod=mod, #Model
                                no_covars = no_covars, #deprecated
                                project = project,
+                               survey_projection = survey_projection,
                                mod_search = mod_search,
                                save_output = save_output,
                                df = df) #is this a projection
-  
-  #return output from exploration or projections
-  # ifelse(project,
-  #        pe_idx <- "project",
-  #        pe_idx <- "exploratory")
-  # return(tmp_output[[pe_idx]][[mod]])
   
 }#End stages

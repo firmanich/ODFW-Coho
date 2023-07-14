@@ -5,7 +5,7 @@ function_wrangle_data <- function(stage=NA,
   library(dplyr)
   library(tidyr)
   #Read in the juvenile data, change AUC.Mi to dens
-  juv <- read.csv(paste0('C:/noaa/LARGE_Data/JuvData.csv'), 
+  juv <- read.csv(paste0('C:/noaa/LARGE_Data/1DataExportJuv_2023_04_18.csv'), 
                   header=TRUE,
                   dec=".",
                   stringsAsFactors = FALSE) %>% 
@@ -13,11 +13,13 @@ function_wrangle_data <- function(stage=NA,
     mutate('yr' = as.integer(JuvYr)) %>% 
     mutate(UTM_E = as.numeric(UTM_E)) %>%
     mutate(UTM_N = as.numeric(UTM_N)) %>%
+    mutate(STRM_ORDER = as.integer(STRM_ORDER)) %>%
     filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.)))#get rid of anything without a density
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
+    juv <- juv[juv$yr<=2019,]
   
   #Read in the spawner data, change AUC.Mi to dens
-  sp <- read.csv(paste0('C:/noaa/LARGE_Data/SpawnData.csv'),
+  sp <- read.csv(paste0('C:/noaa/LARGE_Data/DataSpwn_2023_05_04.csv'),
                  header=TRUE,
                  dec=".",
                  stringsAsFactors = FALSE) %>%
@@ -27,6 +29,7 @@ function_wrangle_data <- function(stage=NA,
     mutate(UTM_N = as.numeric(UTM_N)) %>%
     filter_at(vars(dens), all_vars(!is.na(.))) #get rid of anything without a density
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
+    sp <- sp[sp$yr<=2019,]
   
   #row bind the data based on common column headings
   depVars <- c('STRM_ORDER','LifeStage','dens','yr','PopGrp','ID_Num')
@@ -43,7 +46,7 @@ function_wrangle_data <- function(stage=NA,
   my_factor <- function(x) as.factor(x)
   #combine, rescale, and fill in some missing vals
   df <- bind_rows(juv,sp) %>% #Not sure why I decided to combine these and then subset
-    dplyr::select(all_of(c(depVars,coVars)))%>% #grab myVars from above
+    dplyr::select(all_of(c(depVars,coVars,'Panel')))%>% #grab myVars from above
     filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.))) %>% #get rid of anything without a density or UTM
     filter(LifeStage==!!stage) %>% #grab a particular life stage
     mutate_at(all_of(coVars), ~replace_na(.,mean(., na.rm = TRUE))) %>% #get rid of NAs, a little TOO CLUTCHY
@@ -64,8 +67,10 @@ function_wrangle_data <- function(stage=NA,
     )
   
   # df <- df[df$UTM_E_km!=0,]
-  df <- df[abs(df$W3Dppt)<=4,]
+  df <- df[abs(df$W3Dppt)<=4,] #There are some big outliers in the data.
+  # print(paste("df dim",dim(df)))
   df <- na.omit(df) #Necessary to get Spwn data to work.
+  # print(paste("df dim after NA removed",dim(df)))
   
   return(df)
   

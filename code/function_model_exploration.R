@@ -2,6 +2,8 @@ function_model_exploration <- function(stage = stage,
                               mod = mod, 
                               no_covars = no_covars, 
                               project = project,
+                              survey_projection = FALSE,
+                              survey_type = NA,
                               # output = output,
                               mod_search = mod_search,
                               df = df,
@@ -15,8 +17,8 @@ function_model_exploration <- function(stage = stage,
   #Grab the model search arguments from the saved tagged list
   # mod <- "gam"
   search <- mod_search$args[[mod]]
-  print(paste0("searching over ",mod))
-  print(search[[mod]])
+  # print(paste0("searching over ",mod))
+  # print(search)
   
   # find model with lowest out of sample rmse
   search$rmse <- 1e6
@@ -30,16 +32,85 @@ function_model_exploration <- function(stage = stage,
   bestAIC <- 1e6
   
   for(i in 1:nforms){
+    
     #grab the training data
     train <- dplyr::filter(df,
-                          yr < (mod_search$args[[mod]]$test_years[i] - mod_search$args[[mod]]$n_years_ahead[i] + 1)) %>%
+                          yr < (search$test_years[i] - search$n_years_ahead[i] + 1)) %>%
       dplyr::mutate(fYr = as.factor(yr))
+    
+    #Do this order the mesh get screwed up if you order the data
+    train <- train[
+      with(train, order(ID_Num, yr)),
+    ]
+    
 
+    if(!survey_projection){
+      # cat("\n ********* Forward projection for years",search$test_years[i],"\n")
+      cat("train data\n")
+      print(dim(train))
+      print(table(train$yr))
+    }    
+    
+    if(survey_projection){
+      #Training data up to forecast year
+        s_i <- unlist(strsplit(search$survey_type[[i]],split=", ",fixed=TRUE))
+        s_y <- min(search$test_years):search$test_years[i]
+        cat("\n********** Survey evalulation type",s_i, "for years",s_y,"\n")
+        
+        tmp_s <- df %>%
+          filter(yr %in% s_y)
+        
+        #Keep the surveys and survey years you want
+        survey_yr <- df %>%
+          filter(yr %in% s_y) %>%
+          filter(Panel %in% s_i)
+        
+
+        train <- rbind(df[df$yr<min(search$test_years),],
+                       survey_yr)
+        train$fYr <- as.factor(train$yr)
+        
+        train <- train[
+          with(train, order(ID_Num, yr)),
+        ]
+        # print(table(train2$yr))
+        # train2 <- train2[order(train2$ID_Num),]
+
+        # write.csv(train2, file = "train2.csv")
+        
+        # print(mean(train2$dens))
+        # plot(train$dens,train2$dens)
+        
+        # print('dim 2')
+        # print(dim(train2))
+        
+        # cat("train data\n")
+        # print(dim(train))
+        # print(table(train$yr))
+    }
+    
     #Grab the test year: either the last year of the training data or projection year    
-    test <- dplyr::filter(df, yr == mod_search$args[[mod]]$test_years[i]) %>%
-      dplyr::mutate(fYr = as.factor(yr))
-
-    print(table(test$yr))
+    if(!project){
+      test <- dplyr::filter(df, yr == search$test_years[i]) %>%
+        dplyr::mutate(fYr = as.factor(yr))
+    }
+    if(project){
+      #Test data based  on the number of projection years
+      test <- dplyr::filter(df, yr %in% (search$test_years[i] - search$n_years_ahead[i]):search$test_years[i]) %>%
+        dplyr::mutate(fYr = as.factor(yr))
+      
+      if(survey_projection){
+        #you want to predict for all locations
+        test <- dplyr::filter(df, yr %in% (search$test_years[i])) %>%
+          dplyr::mutate(fYr = as.factor(yr))
+        # print("survey train project")
+        # print(dim(test))
+      }else{
+        # print("temporal train project")
+        # print(dim(test))
+      }
+    }
+    
     #just use the same mesh for all sdm projections and explorations
     if(mod == 'sdm'){
       #For the sdmTMb package you have to predict over all years.
@@ -47,13 +118,18 @@ function_model_exploration <- function(stage = stage,
       test = dplyr::filter(df, yr <= search$test_years[i]) %>%
         mutate(fYr = as.factor(yr))
 
+      # print(search)
+      # print(i)
+      # print("train data")
+      # print(table(train$yr))
+      
       #Create the mesh
       mesh <- make_mesh(train, c("UTM_E_km", "UTM_N_km"), cutoff = 10)
     }
 
     if(project){
-      print(paste(stage, mod, "projection year", search$test_years[i], " for ",
-                  mod_search$args[[mod]]$n_years_ahead[i], " years ahead."))
+      cat("\n stage ",stage,", model ",mod,", projection year ", search$test_years[i], ", for ",
+                  search$n_years_ahead[i], " years ahead.\n\n")
 
       best_mod_frm <- output$exploratory[[mod]]$best_mod #From saved exploration file
 
@@ -63,21 +139,33 @@ function_model_exploration <- function(stage = stage,
                       mesh = mesh,
                       family = tweedie(link = "log"),
                       time = "yr",
-                      spatial = output$exploratory[[mod]]$best_sp,
-                      spatiotemporal = output$exploratory[[mod]]$best_st,
+                      spatial = search$sp[i],
+                      spatiotemporal = search$st[i],
                       anisotropy = TRUE,
                       extra_time = unique(test$yr[test$yr>max(train$yr)]), #Why is this necessary if the years are the same?
                       silent=TRUE)
+        # print("sdm")
+        # print("train")
+        # print(dim(train))
+        # print("test")
+        # print(dim(test))
 
         #Model prediction
         pred <- predict(fit,
                         test,
                         re_form_iid = NA)
 
+        
+        #Even if you are projecting 2 years into the future, only compare the last of the projection years
+        print("rmse")
+        print(length(test$dens[test$yr==search$test_years[i]]))
+        # print("summary")
+        # print(summary(fit))
+        #The RMSE is for all survey locations for the survey year.
+        search$rmse[i] = sqrt(mean((test$dens[test$yr==search$test_years[i]] -
+                                           exp(pred$est[test$yr==search$test_years[i]]))^2))
 
-        search$rmse[i] = sqrt(mean((test$dens[test$yr==mod_search$args[[mod]]$test_years[i]] -
-                                           exp(pred$est[test$yr==mod_search$args[[mod]]$test_years[i]]))^2))
-
+        write.csv(pred,file = paste("pred",survey_type,survey_projection,search$test_years[i],search$n_years_ahead[i],".csv", sep=""))
         search$AIC[i] = AIC(fit)
       }
 
@@ -89,16 +177,25 @@ function_model_exploration <- function(stage = stage,
                            data=train)
 
         pred <- predict(fit, test)
-        search$rmse[i] = sqrt(mean((pred-test$dens)^2))
+        # print(table(train$yr))
+        # print(table(test$yr))
+        # print(pred)
+        search$rmse[i] = sqrt(mean(((pred-test$dens)[test$yr == search$test_years[i]])^2))
       }
 
       if(mod=='gam'){
+        # print(best_mod_frm)
+        # print(range(train$yr))
+        # print(range(test$yr))
+        tmp_test <- test 
+        tmp_test$dens <- NA
         #Refit the best model with the training data. You have to refit to each new training data set
         fit <-  gam(best_mod_frm, data=train, family = "tw")
         #Predict the year in questions
         p <-  predict(fit,test, family = "tw")
+        # print(head(p))
         #Save it to the projection grid search
-        search$rmse[i] <- sqrt(mean((exp(p)-test$dens)^2))
+        search$rmse[i] <- sqrt(mean((exp(p)-test$dens)[test$yr == search$test_years[i]]^2))
         search$AIC[i] <- AIC(fit)
       }
     }#project = TRUE
@@ -111,10 +208,10 @@ function_model_exploration <- function(stage = stage,
 
       if(mod=="rf"){
         #Fit the data
-        if(mod_search$args[[mod]]$mtry[i]<=length(attr(terms(mod_frm),"term.labels"))){
+        if(search$mtry[i]<=length(attr(terms(mod_frm),"term.labels"))){
           fit = randomForest(mod_frm,
-                           mtry = mod_search$args[[mod]]$mtry[i],
-                           ntree = mod_search$args[[mod]]$ntree[i],
+                           mtry = search$mtry[i],
+                           ntree = search$ntree[i],
                            data=train)
 
           pred <- predict(fit, test)
@@ -130,28 +227,28 @@ function_model_exploration <- function(stage = stage,
                     mesh = mesh,
                     family = tweedie(link = "log"),
                     time = "yr",
-                    spatial = mod_search$args[[mod]]$sp[i],
-                    spatiotemporal = mod_search$args[[mod]]$st[i],
+                    spatial = search$sp[i],
+                    spatiotemporal = search$st[i],
                     anisotropy = TRUE,
                     extra_time = unique(test$yr[test$yr>max(train$yr)]), #Why is this necessary if the years are the same?
                     silent=TRUE)
         pred <- predict(fit, test, re_form_iid = NA)
         #Save the root mean square error in the search
         # search$rmse[i] = sqrt(mean((test$dens - exp(pred$est))^2))
-        search$rmse[i] = sqrt(mean((test$dens[test$yr==mod_search$args[[mod]]$test_years[i]] -
-                                      exp(pred$est[test$yr==mod_search$args[[mod]]$test_years[i]]))^2))
+        search$rmse[i] = sqrt(mean((test$dens[test$yr==search$test_years[i]] -
+                                      exp(pred$est[test$yr==search$test_years[i]]))^2))
         search$AIC[i] <- AIC(fit)
       }
 
       if(mod=="gam"){
-        # mod_search$args[[mod]]$mod[i] <- i
-        # mod_search$args[[mod]]$args[i] <- NA
+        # search$mod[i] <- i
+        # search$args[i] <- NA
         # print(mod_frm)
         fit <-  gam(mod_frm, data=train, family = "tw")
         pred <- predict(fit,test)
         # print(mod_frm)
         # print(test$dens)
-        # print(pred)
+        # print(head(pred))
         search$rmse[i] <- sqrt(mean((exp(pred)-test$dens)^2))
         search$AIC[i] <- AIC(fit)
       }
@@ -167,11 +264,12 @@ function_model_exploration <- function(stage = stage,
     }
 
 
-    print(paste(stage,mod,"rmse",
-                round(search$rmse[i],3)))
+    cat("\n rmse",
+                round(search$rmse[i],3),"*******\n")
   }#end model forms
 
   #Update the output for each model iteration
+  #YOu only need to update the GRID SEARCH
   if(project){
     #re-fit best model
     if(mod=='rf'){
@@ -200,10 +298,10 @@ function_model_exploration <- function(stage = stage,
     }
   }else{
     
-    print(search)
+    # print(search)
     
     if(mod=='sdm'){
-      print(search)
+      # print(search)
       #Get the model index for the model with the lowest RMSE
       indx = search %>%
         group_by(mod,sp,st) %>%
@@ -244,7 +342,7 @@ function_model_exploration <- function(stage = stage,
                                             grid_search = search)
     }
     if(mod=='gam'){
-      print(search)
+      # print(search)
       #Get the model index for the model with the lowest RMSE
       indx = search %>%
         group_by(mod) %>%

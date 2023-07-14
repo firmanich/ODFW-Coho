@@ -2,7 +2,8 @@
 model_exploration <- function(stage="",
                               mod="", 
                               no_covars = TRUE, 
-                              project = FALSE){
+                              project = FALSE,
+                              survey_projection = FALSE){
   
   library(sdmTMB)
   library(randomForest)
@@ -34,6 +35,14 @@ model_exploration <- function(stage="",
       dplyr::mutate(fYr = as.factor(yr))
 
 
+    if(survey_projection){
+      #Training data up to forecast year
+      train <- df[df$yr!=search$test_years[i] | obs_data$Panel%in%c("annual","annua"),]
+      train <- train[train$yr<(search$test_years[i] - search$n_years_ahead[i] + 1)]
+    }
+    
+    mesh <- make_mesh(rbind(train,survey), c("UTM_E_km", "UTM_N_km"), cutoff = 10)
+    
     #just use the same mesh for all sdm projections and explorations
     if(mod == 'sdm'){
       test = dplyr::filter(df, yr <= search$test_years[i]) %>%

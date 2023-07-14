@@ -35,7 +35,8 @@ for(i in unique(arr$Life_stage)){
       g[[gi]] <- ggplot(data = arr[arr$Life_stage==i & arr$stat==j,], aes(fill=as.factor(col), x = reorder(pi,value), y = value))
       # g[[gi]] <- g[[gi]]
     }else{
-      g[[gi]] <- ggplot(data = arr[arr$Life_stage==i & arr$stat==j,], aes(fill=as.factor(col), x = reorder(pi,desc(value)), y = value))
+      g[[gi]] <- ggplot(data = arr[arr$Life_stage==i & arr$stat==j,], aes(fill=as.factor(col), x = reorder(pi,desc(value)), y = value)) +
+        ylim(0,1.1)
     }
     g[[gi]] <- g[[gi]] + 
       geom_col(aes(), width = 0.8, colour = "black") +
@@ -60,3 +61,5 @@ ggsave(paste0('./output/combined_model_fit_diagnostics.png'),
        units = 'in', 
        dpi = 500)
 # ggpubr::annotate_figure()
+
+save(arr, file = "combined_model_fit_diagnostics.rData")

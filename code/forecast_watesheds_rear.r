@@ -7,12 +7,12 @@ library(ggplot2)
 life_stage <- "Spwn"
 
 #Get the stream lines
-tmpDir <- "C:/noaa/large_data/coho_stream_net/CohoNetmapClip.shp"
-stream_data <- readOGR(dsn = tmpDir, stringsAsFactors = F)
-
-#Get the boundaries for the populations
-tmpDir <- "C:/noaa/projects/odfw-coho/shp/Coho_oc_pop-utm83.shp"
-bndy_data <- readOGR(dsn = tmpDir, stringsAsFactors = F)
+# tmpDir <- "C:/noaa/large_data/coho_stream_net/CohoNetmapClip.shp"
+# stream_data <- readOGR(dsn = tmpDir, stringsAsFactors = F)
+# 
+# #Get the boundaries for the populations
+# tmpDir <- "C:/noaa/projects/odfw-coho/shp/Coho_oc_pop-utm83.shp"
+# bndy_data <- readOGR(dsn = tmpDir, stringsAsFactors = F)
 
 #Get the observed data
 load(paste0("./output/output_",life_stage,".rData"))
@@ -23,32 +23,34 @@ fit <- output$exploratory$sdm$best_fit
 data_pop_names <- unique(output$exploratory$sdm$best_fit$data$PopGrp)
 data_pop_names[data_pop_names%in%c("Alsea", "Yaquina", "Siuslaw")] <- paste(data_pop_names[data_pop_names%in%c("Alsea", "Yaquina", "Siuslaw")], "River")
 data_pop_names[data_pop_names%in%c("Tenmile")] <- paste(data_pop_names[data_pop_names%in%c("Tenmile")], "Creek")
+data_pop_names <- data_pop_names[!(data_pop_names%in%c("Tenmile Creek", "Tahkenitch", "Siltcoos"))]
+
 
 gis_pop_names <- bndy_data$POPULATION
 
 myFunc <- function(pi){
   print(pi)
-  if(length(grep(pi,gis_pop_names)>0)){
-    p_i <- grep(pi,gis_pop_names)
+  # if(length(grep(pi,gis_pop_names)>0)){
+  #   p_i <- grep(pi,gis_pop_names)
 
-    #pop i boundary
-    bndy_i <- as.data.frame(bndy_data@polygons[[p_i]]@Polygons[[1]]@coords)
-    names(bndy_i) <- c("X","Y")
-    
-    #Get the correct boundary
-    Sr1 <- Polygon(cbind(bndy_i$X/1000,bndy_i$Y/1000))
-    
-    #Streams within boundary
-    pin <- point.in.polygon(stream_data@data[,'X_MID']/1000,
-                            stream_data@data[,'Y_MID']/1000,
-                            Sr1@coords[,1],
-                            Sr1@coords[,2])
-    #Data within boundary  
-    pin2 <- point.in.polygon(obs_data$UTM_E_km,
-                             obs_data$UTM_N_km,
-                             Sr1@coords[,1],
-                             Sr1@coords[,2])
-    pred_data <- obs_data[pin2 == 1, ]
+    # #pop i boundary
+    # bndy_i <- as.data.frame(bndy_data@polygons[[p_i]]@Polygons[[1]]@coords)
+    # names(bndy_i) <- c("X","Y")
+    # 
+    # #Get the correct boundary
+    # Sr1 <- Polygon(cbind(bndy_i$X/1000,bndy_i$Y/1000))
+    # 
+    # #Streams within boundary
+    # pin <- point.in.polygon(stream_data@data[,'X_MID']/1000,
+    #                         stream_data@data[,'Y_MID']/1000,
+    #                         Sr1@coords[,1],
+    #                         Sr1@coords[,2])
+    # #Data within boundary  
+    # pin2 <- point.in.polygon(obs_data$UTM_E_km,
+    #                          obs_data$UTM_N_km,
+    #                          Sr1@coords[,1],
+    #                          Sr1@coords[,2])
+    pred_data <- obs_data[obs_data$PopGrp == pi, ]
     print(table(pred_data$fYr))
     y_obs <- table(pred_data$fYr)==0
     print(y_obs)
@@ -65,15 +67,23 @@ myFunc <- function(pi){
     ind <- sdmTMB::get_index(pred)
     ind <- ind[ind$yr%in%as.numeric(names(y_obs)[!y_obs]),]
     ind$pi <- pi
-    ind$p_i <- p_i
+    ind$p_i <- 1
     return(ind)
-  }
+  # }
 }
+
+
+#get rid of the trib we don't want
+obs_data <- obs_data[!(obs_data$PopGrp%in%c('Tenmile','Tahkenitch','Siltcoos')),]
+dependent <- grep("Dependent",obs_data$PopGrp)
+obs_data <- obs_data[-dependent,]
 
 #combine everything into a flat array.
 #I'm sure there's a tidyr r way to do this
+forecast_names <- unique(obs_data$PopGrp)
+
 out <- list()
-for(pi in data_pop_names){
+for(pi in unique(obs_data$PopGrp)){
   out[[pi]] <- myFunc(pi)
 }
 
@@ -81,8 +91,8 @@ for(pi in data_pop_names){
 #Change the names so there all the same.
 source(".\\code\\function_wrangle_data.r")
 sp <- function_wrangle_data(life_stage, dir = "")
-sp$PopGrp[sp$PopGrp%in%c("Alsea", "Yaquina", "Siuslaw")] <- paste(sp$PopGrp[sp$PopGrp%in%c("Alsea", "Yaquina", "Siuslaw")], "River")
-sp$PopGrp[sp$PopGrp%in%c("Tenmile")] <- paste(sp$PopGrp[sp$PopGrp%in%c("Tenmile")], "Creek")
+# sp$PopGrp[sp$PopGrp%in%c("Alsea", "Yaquina", "Siuslaw")] <- paste(sp$PopGrp[sp$PopGrp%in%c("Alsea", "Yaquina", "Siuslaw")], "River")
+# sp$PopGrp[sp$PopGrp%in%c("Tenmile")] <- paste(sp$PopGrp[sp$PopGrp%in%c("Tenmile")], "Creek")
 
 #Create the observation data set
 obs <- sp %>%

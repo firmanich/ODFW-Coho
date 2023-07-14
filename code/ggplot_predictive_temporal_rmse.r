@@ -79,12 +79,12 @@ gg <- ggpubr::ggarrange(plotlist = plotlist,
                         common.legend = TRUE)
 
 gg <- ggpubr::annotate_figure(gg,
-                left = ggpubr::text_grob("Mean RMSE 2017 to 2021", color = "black", rot = 90),
+                left = ggpubr::text_grob("Mean RMSE 2015 to 2019", color = "black", rot = 90),
                 fig.lab = "", fig.lab.face = "bold")
 
 print(gg)
 
-ggsave(file = "./output/ggplot_predictive_rmse_2017_2021.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
+ggsave(file = "./output/ggplot_predictive_temporal_rmse_2015_2019.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
 
   # dev.off()
 
