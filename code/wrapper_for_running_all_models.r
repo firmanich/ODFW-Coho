@@ -11,7 +11,7 @@ library(dplyr)
 
 for(maxYr in c(2019,2021)){
   for(proj in c(FALSE,TRUE)){
-    for(mm in c('rf')){ #model
+    for(mm in c('gam','sdm','rf')){ #model
       for(ss in c('rear','Spwn')){ #life stage
         for(si in c('spatial','temporal')){ #testing models based on survey design or temporal forecasting
           
