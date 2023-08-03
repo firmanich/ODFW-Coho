@@ -7,57 +7,45 @@ library(grid)
 plotlist <- list()
 icnt <- 1
 dataType <- "spatial"
-endYr <- "_2019"
-for(i in c('Spwn',"rear")){
+endYr <- 2021
+for(i in c("rear","Spwn")){
   stage <- i
-  load(paste0("output/",dataType,"_output_",stage,endYr,".rData"))
+  load(paste0("output/",dataType,"_output_",stage,"_",endYr,".rData"))
   # load(paste0("output/","output_",stage,".rData"))
   
   ifelse(stage=="rear", lims <- c(140,380), lims <- c(8,35))
   
-
-  gam <- (output$project$gam$grid_search)
-  for(i in 1:nrow(gam)) gam$survey[i] <- paste(unlist(gam$survey_type[[i]]),collapse="_")
-  gam <- gam %>%  
+  gam <- output$project$gam$grid_search %>%  
     mutate(model = "GAMM") %>% 
-    dplyr::select(c(model,survey,rmse))
+    dplyr::select(c(model,survey_type,rmse))
   
-  sdm <- (output$project$sdm$grid_search)
-  for(i in 1:nrow(sdm)) sdm$survey[i] <- paste(unlist(sdm$survey_type[[i]]),collapse="_")
-  sdm <- sdm %>%  
+  sdm <- output$project$sdm$grid_search %>%  
     mutate(model = "GLMM") %>% 
-    dplyr::select(c(model,survey,rmse))
+    dplyr::select(c(model,survey_type,rmse))
   
-  rf <- (output$project$rf$grid_search)
-  for(i in 1:nrow(sdm)) rf$survey[i] <- paste(unlist(rf$survey_type[[i]]),collapse="_")
-  rf <- rf %>%  
-    mutate(model = "Random\nforest") %>% 
-    dplyr::select(c(model,survey,rmse))
+  rf <- output$project$rf$grid_search %>%  
+    mutate(model = "Random Foret") %>% 
+    dplyr::select(c(model,survey_type,rmse))
   
+  rmse_mean <- dplyr::bind_rows(gam,sdm,rf) %>% 
+    dplyr::group_by(model,survey_type) %>%
+    dplyr::summarise(rmse_mean = mean(rmse)) #%>%
   
-  rmse_mean <- as.data.frame(rbind(gam,sdm,rf))
-  rmse_mean$survey <- unlist(rmse_mean$survey)
+  rmse_mean <- as.data.frame(rmse_mean)
+  rmse_mean$survey_type <- unlist(lapply(rmse_mean$survey_type, function(x){paste(x,collapse = ",")}))
   
   rmse_mean$survey <- as.factor(rmse_mean$survey)
-  levels(rmse_mean$survey) <- c("Complete", "Annual", "Annual & Three", "No Survey")
+  levels(rmse_mean$survey) <- c("Exploratory\n(All sites)", "Annual sites", "Annual + Three sites", "Index sites")
   
-  rmse_mean <- rmse_mean %>%
-    group_by(model,survey) %>%
-    summarise(rmse = mean(rmse))
+  ifelse(stage=="rear", lims <- c(140,380), lims <- c(8,40))
   
-  # levels(rmse_mean$survey) <- levels(rmse_mean$survey)[c(4,2,3,1)]
-  
-    # rmse_mean$survey <- factor(rmse_mean$survey, levels = rmse_mean$survey[order(rmse_mean$rmse)])
-  # x$name  # notice the changed order of factor levels
-#   ifelse(stage=="rear", lims <- c(140,380), lims <- c(8,35))
-#   
-  plotlist[[icnt]] <- ggplot(aes(y = rmse, x = model, fill = (survey)),
-               data = rmse_mean) +
+  plotlist[[icnt]] <- ggplot(aes(y = rmse_mean, x = model, fill = (survey)),
+                             data = rmse_mean) +
     geom_bar(position="dodge", stat="identity") +
     scale_fill_grey()+
     ylab("") +
     xlab("") +
-    guides(fill=guide_legend(title="Survey design")) +
+    guides(fill=guide_legend(title="Spatial analysis")) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), axis.line = element_line(colour = "black")) +
     coord_cartesian(ylim=lims)
@@ -81,7 +69,7 @@ gg <- ggpubr::annotate_figure(gg,
 
 print(gg)
 
-# ggsave(file = "./output/ggplot_predictive_survey_rmse_2015_2019.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
+ggsave(file = paste("./output/ggplot_predictive_temporal_rmse_",endYr - 4,"_", endYr,".png"), gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
 
   # dev.off()
 
