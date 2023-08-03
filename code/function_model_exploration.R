@@ -73,20 +73,6 @@ function_model_exploration <- function(stage = stage,
         train <- train[
           with(train, order(ID_Num, yr)),
         ]
-        # print(table(train2$yr))
-        # train2 <- train2[order(train2$ID_Num),]
-
-        # write.csv(train2, file = "train2.csv")
-        
-        # print(mean(train2$dens))
-        # plot(train$dens,train2$dens)
-        
-        # print('dim 2')
-        # print(dim(train2))
-        
-        # cat("train data\n")
-        # print(dim(train))
-        # print(table(train$yr))
     }
     
     #Grab the test year: either the last year of the training data or projection year    
@@ -118,11 +104,6 @@ function_model_exploration <- function(stage = stage,
       test = dplyr::filter(df, yr <= search$test_years[i]) %>%
         mutate(fYr = as.factor(yr))
 
-      # print(search)
-      # print(i)
-      # print("train data")
-      # print(table(train$yr))
-      
       #Create the mesh
       mesh <- make_mesh(train, c("UTM_E_km", "UTM_N_km"), cutoff = 10)
     }

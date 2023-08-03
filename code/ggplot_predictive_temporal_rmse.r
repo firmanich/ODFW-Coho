@@ -6,17 +6,18 @@ library(grid)
 #Run through models
 plotlist <- list()
 icnt <- 1
+endYr <- 2019
 for(i in c('rear','Spwn')){
   stage <- i
-  load(paste0("output/temporal_output_",stage,".rData"))
+  load(paste0("output/spatial_output_","rear","_",endYr,".rData"))
   
-  # rf <- output$exploratory$rf$grid_search %>%
-  #   mutate(model = 'Random\nforest') %>%
-  #   group_by(model,mod,mtry,ntree) %>%
-  #   summarise(rmse_mean = mean(rmse)) %>%
-  #   group_by(model) %>%
-  #   filter(rmse_mean == min(rmse_mean)) %>%
-  #   select(model,rmse_mean)
+  rf <- output$exploratory$rf$grid_search %>%
+    mutate(model = 'Random\nforest') %>%
+    group_by(model,mod,mtry,ntree) %>%
+    summarise(rmse_mean = mean(rmse)) %>%
+    group_by(model) %>%
+    filter(rmse_mean == min(rmse_mean)) %>%
+    select(model,rmse_mean)
   # 
   # sdm <- (output$exploratory$sdm$grid_search) %>%  
   #   mutate(model = "GLMM") %>% 

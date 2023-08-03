@@ -6,9 +6,12 @@ library(grid)
 #Run through models
 plotlist <- list()
 icnt <- 1
-for(i in c('rear','Spwn')){
+dataType <- "spatial"
+endYr <- "_2019"
+for(i in c('Spwn',"rear")){
   stage <- i
-  load(paste0("output/survey_output_",stage,".rData"))
+  load(paste0("output/",dataType,"_output_",stage,endYr,".rData"))
+  # load(paste0("output/","output_",stage,".rData"))
   
   ifelse(stage=="rear", lims <- c(140,380), lims <- c(8,35))
   
@@ -74,9 +77,11 @@ gg <- ggpubr::annotate_figure(gg,
                 left = ggpubr::text_grob("Mean RMSE Survery 2015 to 2019", color = "black", rot = 90),
                 fig.lab = "", fig.lab.face = "bold")
 
+# assign(paste0("rf_",endYr),rf)
+
 print(gg)
 
-ggsave(file = "./output/ggplot_predictive_survey_rmse_2015_2019.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
+# ggsave(file = "./output/ggplot_predictive_survey_rmse_2015_2019.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
 
   # dev.off()
 

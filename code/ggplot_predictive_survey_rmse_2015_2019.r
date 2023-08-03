@@ -8,7 +8,7 @@ plotlist <- list()
 icnt <- 1
 for(i in c('rear','Spwn')){
   stage <- i
-  load(paste0("output/survey_output_",stage,".rData"))
+  load(paste0("output/spatial_output_rear_2019.rData"))
   
   ifelse(stage=="rear", lims <- c(140,380), lims <- c(10,65))
   
@@ -66,12 +66,12 @@ gg <- ggpubr::ggarrange(plotlist = plotlist,
                         common.legend = TRUE)
 # 
 gg <- ggpubr::annotate_figure(gg,
-                left = ggpubr::text_grob("Mean RMSE Survery 2017 to 2021", color = "black", rot = 90),
+                left = ggpubr::text_grob("Mean RMSE Survery 2015 to 2019", color = "black", rot = 90),
                 fig.lab = "", fig.lab.face = "bold")
 
 print(gg)
 
-ggsave(file = "./output/ggplot_predictive_survey_rmse_2017_2021.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
+# ggsave(file = "./output/ggplot_predictive_survey_rmse_2015_2019.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
 
   # dev.off()
 

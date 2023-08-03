@@ -1,5 +1,7 @@
-function_wrangle_data <- function(stage=NA,
-                                  dir = root){
+function_wrangle_data <- function(stage=NA, #life stage you're interested in 
+                                  dir = root, #file directory
+                                  maxYr = NA #max year to include
+                                  ){
   
 
   library(dplyr)
@@ -16,8 +18,10 @@ function_wrangle_data <- function(stage=NA,
     mutate(STRM_ORDER = as.integer(STRM_ORDER)) %>%
     filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.)))#get rid of anything without a density
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
-    juv <- juv[juv$yr<=2019,]
   
+  juv <- juv[juv$yr<=maxYr,]
+  
+
   #Read in the spawner data, change AUC.Mi to dens
   sp <- read.csv(paste0('C:/noaa/LARGE_Data/DataSpwn_2023_05_04.csv'),
                  header=TRUE,
@@ -29,7 +33,8 @@ function_wrangle_data <- function(stage=NA,
     mutate(UTM_N = as.numeric(UTM_N)) %>%
     filter_at(vars(dens), all_vars(!is.na(.))) #get rid of anything without a density
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
-    sp <- sp[sp$yr<=2019,]
+  
+  sp <- sp[sp$yr<=maxYr,]
   
   #row bind the data based on common column headings
   depVars <- c('STRM_ORDER','LifeStage','dens','yr','PopGrp','ID_Num')
