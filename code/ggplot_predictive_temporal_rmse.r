@@ -49,17 +49,17 @@ for(i in c('rear','Spwn')){
   icnt <- icnt + 1
 }
 
-gg <- ggpubr::ggarrange(plotlist = plotlist,
+gg1 <- ggpubr::ggarrange(plotlist = plotlist,
                         ncol = 2,
                         legend = 'right',
                         labels = c("A","B"),
                         common.legend = TRUE)
 
-gg <- ggpubr::annotate_figure(gg,
+gg1 <- ggpubr::annotate_figure(gg1,
                 left = ggpubr::text_grob(paste0("Mean RMSE ",endYr - 4," to ", endYr), color = "black", rot = 90),
                 fig.lab = "", fig.lab.face = "bold")
 
-print(gg)
-ggsave(file = paste("./output/ggplot_predictive_temporal_rmse_",endYr - 4,"_", endYr,".png"), gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
+print(gg1)
+ggsave(file = paste("./output/ggplot_predictive_rmse_",endYr - 4,"_", endYr,".png"), gg, device = "png", dpi = 300, height = 7, width = 5, units="in")
 dev.off()
 

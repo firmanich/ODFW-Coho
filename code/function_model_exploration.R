@@ -38,7 +38,7 @@ function_model_exploration <- function(stage = stage,
                           yr < (search$test_years[i] - search$n_years_ahead[i] + 1)) %>%
       dplyr::mutate(fYr = as.factor(yr))
     
-    #Do this order the mesh get screwed up if you order the data
+    #Do this order the mesh get screwed up if you don't order the data
     train <- train[
       with(train, order(ID_Num, yr)),
     ]
@@ -56,7 +56,8 @@ function_model_exploration <- function(stage = stage,
         s_i <- unlist(strsplit(search$survey_type[[i]],split=", ",fixed=TRUE))
         s_y <- min(search$test_years):search$test_years[i]
         cat("\n********** Survey evalulation type",s_i, "for years",s_y,"\n")
-        
+
+                
         tmp_s <- df %>%
           filter(yr %in% s_y)
         
@@ -66,13 +67,20 @@ function_model_exploration <- function(stage = stage,
           filter(Panel %in% s_i)
         
 
+        #combine the all data from all of the years between the RMSE years
+        #with only the survey from RMSE years.
         train <- rbind(df[df$yr<min(search$test_years),],
                        survey_yr)
         train$fYr <- as.factor(train$yr)
+        train <- train[with(train, order(ID_Num, yr)),]
         
-        train <- train[
-          with(train, order(ID_Num, yr)),
-        ]
+        print("s_i")
+        print(s_i)
+        print("df")
+        print(table(df$fYr, df$Panel))
+        print("table(train$fYr)")
+        print(table(train$fYr))
+        print(table(train$fYr, train$Panel))
     }
     
     #Grab the test year: either the last year of the training data or projection year    
@@ -166,8 +174,8 @@ function_model_exploration <- function(stage = stage,
 
       if(mod=='gam'){
         # print(best_mod_frm)
-        # print(range(train$yr))
-        # print(range(test$yr))
+        print(range(train$yr))
+        print(range(test$yr))
         tmp_test <- test 
         tmp_test$dens <- NA
         #Refit the best model with the training data. You have to refit to each new training data set
