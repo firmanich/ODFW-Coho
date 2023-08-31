@@ -3,7 +3,7 @@ tbl <- tibble('n_years_ahead' = integer(),
               'model' = character(),
               'lifestage' = character())
 
-stage <- "rear"
+stage <- "Spwn"
 load(paste0("output/output_",stage,".rData"))
 
 for(i in c('exploratory', 'project')){

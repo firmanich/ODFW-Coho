@@ -8,10 +8,13 @@ require(sdmTMB)
 library(tidyr)
 library(dplyr)
  
- 
-for(mm in c('gam','sdm','rf')){ #model
-  for(ss in c('rear','Spwn')){ #life stage
-    for(si in c('Temporal_',"survey_")){ #testing models based on survey design or temporal forecasting
+
+years <- 2015:2019
+endYr <- max(years)
+
+for(mm in c('gam')){ #model
+  for(ss in c('rear')){ #life stage
+    for(si in c('Temporal')){ #testing models based on survey design or temporal forecasting
       
       if(si=="survey_"){
         n_years_ahead <- c(0)
@@ -23,7 +26,7 @@ for(mm in c('gam','sdm','rf')){ #model
       
       #load the saved output
       cat('\n\n')
-      file <- paste0("output/",si,"output_",ss,".rdata")
+      file <- paste0("output/",si,"_output_",ss,"_",endYr,".rdata")
       load(file = file)
       #update the new output
       output <- function_run_models(project = TRUE, #This is whether you want to project into the future 

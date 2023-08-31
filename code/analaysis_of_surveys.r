@@ -12,9 +12,14 @@ mape_rand_pred <- forecast_yrs
 mape_annual_pred <- forecast_yrs
 mape_annual_three_pred <- forecast_yrs
 
+
+#naming for output
+survey_type <- "Temporal"
 life_stage <- 'Spwn'
+endYr <- max(forecast_yrs)
+
 #Get the observed data
-load(paste0("./output/output_",life_stage,".rData"))
+load(paste0("./output/",survey_type,"_output_",life_stage,"_",endYr,".rData"))
 obs_data <- function_wrangle_data(stage = life_stage, dir = NA)
 
 fit <- output$exploratory$sdm$best_fit
@@ -27,7 +32,7 @@ comp <- data.frame(sample = NA,
 
 nrep <- 1
 
-survey_yrs <- 2017:20
+survey_yrs <- 2017:2021
 icnt <- 1
 for(j in list(c("annual", "annua"),c("annual","annua","three"))){
   for(i in survey_yrs){

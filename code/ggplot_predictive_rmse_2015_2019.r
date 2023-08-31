@@ -6,33 +6,36 @@ library(grid)
 #Run through models
 plotlist <- list()
 icnt <- 1
+library(mgcv)
+library(sdmTMB)
+library(randomForest)
 for(i in c('rear','Spwn')){
   stage <- i
-  load(paste0("output/temporal_output_",stage,".rData"))
+  load(paste0("output/temporal_output_",stage,"_",2019,".rData"))
   
-  # rf <- output$exploratory$rf$grid_search %>%
-  #   mutate(model = 'Random\nforest') %>%
-  #   group_by(model,mod,mtry,ntree) %>%
-  #   summarise(rmse_mean = mean(rmse)) %>%
-  #   group_by(model) %>%
-  #   filter(rmse_mean == min(rmse_mean)) %>%
-  #   select(model,rmse_mean)
-  # 
-  # sdm <- (output$exploratory$sdm$grid_search) %>%  
-  #   mutate(model = "GLMM") %>% 
-  #   group_by(model,mod,st,sp) %>%
-  #   summarise(rmse_mean = mean(rmse)) %>%
-  #   group_by(model) %>%
-  #   filter(rmse_mean == min(rmse_mean)) %>%
-  #   select(model,rmse_mean)
-  # 
-  # gam <- output$exploratory$gam$grid_search %>%  
-  #   mutate(model = 'GAMM') %>%
-  #   group_by(model,mod) %>%
-  #   summarise(rmse_mean = mean(rmse)) %>%
-  #   group_by(model) %>%
-  #   filter(rmse_mean == min(rmse_mean)) %>%
-  #   select(model,rmse_mean)
+  rf <- output$exploratory$rf$grid_search %>%
+    mutate(model = 'Random\nforest') %>%
+    group_by(model,mod,mtry,ntree) %>%
+    summarise(rmse_mean = mean(rmse)) %>%
+    group_by(model) %>%
+    filter(rmse_mean == min(rmse_mean)) %>%
+    select(model,rmse_mean)
+
+  sdm <- (output$exploratory$sdm$grid_search) %>%
+    mutate(model = "GLMM") %>%
+    group_by(model,mod,st,sp) %>%
+    summarise(rmse_mean = mean(rmse)) %>%
+    group_by(model) %>%
+    filter(rmse_mean == min(rmse_mean)) %>%
+    select(model,rmse_mean)
+
+  gam <- output$exploratory$gam$grid_search %>%
+    mutate(model = 'GAMM') %>%
+    group_by(model,mod) %>%
+    summarise(rmse_mean = mean(rmse)) %>%
+    group_by(model) %>%
+    filter(rmse_mean == min(rmse_mean)) %>%
+    select(model,rmse_mean)
   
   rmse_mean1 <- dplyr::bind_rows(gam,sdm,rf) %>% 
     dplyr::group_by(model) %>%
@@ -84,7 +87,7 @@ gg <- ggpubr::annotate_figure(gg,
 
 print(gg)
 
-ggsave(file = "./output/ggplot_predictive_rmse_2017_2021.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
+# ggsave(file = "./output/ggplot_predictive_rmse_2017_2021.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
 
   # dev.off()
 

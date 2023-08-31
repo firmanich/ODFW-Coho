@@ -1,7 +1,7 @@
-Life_stage <- "rear"
+Life_stage <- "Spwn"
 
 
-load(paste0("C:/noaa/projects/ODFW-Coho/output/output_",Life_stage,".rData"))
+load(paste0("C:/noaa/projects/ODFW-Coho/output/temporal_output_",Life_stage,"_2021.rData"))
 
 
 
@@ -12,13 +12,14 @@ marVars <- c('StrmSlope','WidthM','SolMean','IP_COHO','OUT_DIST','StrmPow','MWMT
 par(mfrow=c(3,3))
 g <- list()
 icnt<- 1
-testYr <- 2019
+testYr <- 2021
 x <- list()
  
 for(i in marVars){
   # i <- marVars[1]
-  df_tmp <-   df <- function_wrangle_data(stage=Life_stage,
-                                          dir = root)
+  df_tmp <-   df <- function_wrangle_data(stage=Life_stage, 
+                                          dir = getwd(),
+                                          maxYr = 2021)
 
   nyears <- unique(df$yr[df$yr!=testYr])
   bool <- df_tmp$yr==testYr
@@ -43,9 +44,9 @@ for(i in marVars){
   x[[icnt]] <- x[[icnt]][x[[icnt]][,i]>(-2) & x[[icnt]][,i]<(5), ]
   
   print(paste(i, dim(x)))
-  q <- quantile(x$est, probs=c(0.1,0.9))
+  q <- quantile(x[[icnt]]$est, probs=c(0.05,0.95))
   library(ggplot2)
-  g[[icnt]] <- ggplot2::ggplot(x[[icnt]][x[[icnt]]$yr==2019,],aes(x = x, y = exp(est - 0.5*est_se^2))) +
+  g[[icnt]] <- ggplot2::ggplot(x[[icnt]][x[[icnt]]$yr==2021,],aes(x = x, y = exp(est - 0.5*est_se^2))) +
     geom_line() +
     geom_ribbon(aes(ymin = exp(est - 0.5*est_se^2) - 1.64*exp(est)*est_se, 
                     ymax = exp(est - 0.5*est_se^2) + 1.64*exp(est)* est_se),
@@ -57,11 +58,11 @@ for(i in marVars){
   
   if(Life_stage=="Spwn"){
     g[[icnt]] <- g[[icnt]] +
-      ylim(-10,25) +
+      ylim(0,100) +
       ylab("Spawner density (#/mi)")
   }else{
     g[[icnt]] <- g[[icnt]] +
-      ylim(0,1000) +
+      ylim(0,1250) +
       ylab("Juvenile density (#/km)")
   }
 
@@ -70,11 +71,10 @@ for(i in marVars){
 
 gg <- ggpubr::ggarrange(plotlist = g)
 
-ggsave(paste0("ggplot_marginalPlot_",Life_stage,".png"), plot= gg, device = "png")
+ggsave(file = paste0("./output/ggplot_marginal_plot_",Life_stage,".png"), 
+       gg, 
+       device = "png", dpi = 500, height = 6, width = 6, units="in")
+
 
 print(gg)
 
-xx <- x[[1]][x[[1]]$yr==2019,]
-# require(grid)
-# ggpubr::annotate_figure(gg, left = textGrob("Common y-axis", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
-#                 bottom = textGrob("Common x-axis", gp =  gpar(cex = 1.3)))
