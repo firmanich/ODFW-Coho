@@ -45,8 +45,8 @@ sp <- read.csv(paste0('C:/noaa/LARGE_Data/DataSpwn_2023_05_04.csv'),
   mutate(UTM_N = as.numeric(UTM_N)) %>%
   filter_at(vars(dens), all_vars(!is.na(.))) #get rid of anything without a density
 sp <- sp[sp$yr<=maxYr,]
-sp <- na.omit(sp)
 
+sp <- function_wrangle_data(stage="spwn", dir = getwd(), maxYr = 2021)
 #row bind the data based on common column headings
 depVars <- c('STRM_ORDER','LifeStage','dens','yr','PopGrp','ID_Num')
 coVars <- c('UTM_E','UTM_N'
@@ -121,4 +121,21 @@ for(i in 1:nrow(f_spwn)){
   f_spwn$SprPpt[i] <- (mean(SprPpt$Spring[SprPpt$IDNUM==f_spwn$SiteID[i]])  - mean(sp$SprPpt))/sd(sp$SprPpt)
 }
 
-mesh <- sdmTMB::make_mesh(sp, c("UTM_E_km", "UTM_N_km"), cutoff = 10)
+f_spwn$UTM_E_km <- f_spwn$UTM_E/1000
+f_spwn$UTM_N_km <- f_spwn$UTM_N/1000
+sp$UTM_E_km <- sp$UTM_E/1000
+sp$UTM_N_km <- sp$UTM_N/1000
+sp$fYr <- as.factor(sp$yr)
+sp <- na.omit(sp)
+
+sptmp <- sp[,c(depVars,coVars)]
+f_spwn$yr <- 2021
+f_spwn$ID_Num <- f_spwn$siteID
+f_spwn$LifeStage <- "spwn"
+m <- names(sptmp)[na.omit(match(names((f_spwn)),names((sptmp))))]
+forecast_df <- rbind(f_spwn[,m],sptmp[,m])
+forecast_df$fYr <- as.factor(forecast_df$yr)
+
+mesh <- sdmTMB::make_mesh()
+pred <- predict(output$exploratory$sdm$best_fit,
+                sp)
