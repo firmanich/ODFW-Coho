@@ -91,6 +91,7 @@ nn <- RANN::nn2(x[x$yr==maxYr,c('UTM_N_km','UTM_E_km')],
 df$MWMT_Index <- x$MWMT_Index[x$yr==maxYr][nn$nn.idx]
 df$SprPpt <- x$SprPpt[x$yr==maxYr][nn$nn.idx]
 
+#Range of the forecast grid
 e_range <- round(range(x$UTM_E_km),1)
 n_range <- round(range(x$UTM_N_km),1)
 
@@ -103,8 +104,8 @@ nn.grid <- RANN::nn2(df[,c('UTM_E_km','UTM_N_km')],grid, k = 1)
 df_grid <- df[nn.grid$nn.idx,]
 df_grid[,c('UTM_E_km','UTM_N_km')] <- grid
 
-#Now create a data with all the data that's not 2021, plus the 
-#unique 2021 data 
+#Now create a dataframe with all the data that's not 2021, plus the 
+#expanded grid of 2021 data 
 #just get the columns that are necessary for the model foecasts
 myCols <- na.omit(match(names(df_grid),names(x)))
 
