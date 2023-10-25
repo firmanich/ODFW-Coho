@@ -120,6 +120,7 @@ pred2021 <- predict(output$exploratory$sdm$best_fit,
                     forecast_data_2021)
 
 p2021 <- pred2021[pred2021$yr==maxYr,c('UTM_E_km','UTM_N_km','est')]
+write.csv(p2021,file="./output/pred_2021.csv")
 plot(p2021[,c('UTM_E_km','UTM_N_km')], col = heat.colors(2000)[2000-round(exp(p2021$est))])
 # #just get the columns that are necessary for the model foecasts
 # myCols <- na.omit(match(names(forecast_data),names(tmp_forecast_data)))
@@ -152,6 +153,8 @@ pred2080 <- predict(output$exploratory$sdm$best_fit,
 pred2080$yr[pred2080$yr==2021] <- 2080
 
 p2080 <- pred2080[pred2080$yr==2080,c('UTM_E_km','UTM_N_km','est')]
+write.csv(p2080,file="./output/pred_2080.csv")
+
 plot(p2080[,c('UTM_E_km','UTM_N_km')], col = heat.colors(2000)[2000-round(exp(p2080$est))])
 
 pred <- rbind(pred2080[,],
