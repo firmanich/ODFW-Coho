@@ -91,6 +91,7 @@ nn <- RANN::nn2(x[x$yr==maxYr,c('UTM_N_km','UTM_E_km')],
 df$MWMT_Index <- x$MWMT_Index[x$yr==maxYr][nn$nn.idx]
 df$SprPpt <- x$SprPpt[x$yr==maxYr][nn$nn.idx]
 
+#Range of the forecast grid
 e_range <- round(range(x$UTM_E_km),1)
 n_range <- round(range(x$UTM_N_km),1)
 
@@ -103,8 +104,8 @@ nn.grid <- RANN::nn2(df[,c('UTM_E_km','UTM_N_km')],grid, k = 1)
 df_grid <- df[nn.grid$nn.idx,]
 df_grid[,c('UTM_E_km','UTM_N_km')] <- grid
 
-#Now create a data with all the data that's not 2021, plus the 
-#unique 2021 data 
+#Now create a dataframe with all the data that's not 2021, plus the 
+#expanded grid of 2021 data 
 #just get the columns that are necessary for the model foecasts
 myCols <- na.omit(match(names(df_grid),names(x)))
 
@@ -119,6 +120,7 @@ pred2021 <- predict(output$exploratory$sdm$best_fit,
                     forecast_data_2021)
 
 p2021 <- pred2021[pred2021$yr==maxYr,c('UTM_E_km','UTM_N_km','est')]
+write.csv(p2021,file="./output/pred_2021.csv")
 plot(p2021[,c('UTM_E_km','UTM_N_km')], col = heat.colors(2000)[2000-round(exp(p2021$est))])
 # #just get the columns that are necessary for the model foecasts
 # myCols <- na.omit(match(names(forecast_data),names(tmp_forecast_data)))
@@ -151,6 +153,8 @@ pred2080 <- predict(output$exploratory$sdm$best_fit,
 pred2080$yr[pred2080$yr==2021] <- 2080
 
 p2080 <- pred2080[pred2080$yr==2080,c('UTM_E_km','UTM_N_km','est')]
+write.csv(p2080,file="./output/pred_2080.csv")
+
 plot(p2080[,c('UTM_E_km','UTM_N_km')], col = heat.colors(2000)[2000-round(exp(p2080$est))])
 
 pred <- rbind(pred2080[,],
