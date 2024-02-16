@@ -13,7 +13,7 @@ library(sdmTMB)
 library(mgcv)
 library(randomForest)
 #2e) Now you need the covariates for your model
-stage <- "rear" #rear or Spwn
+stage <- "Spwn" #rear or Spwn
 
 #Grab the data for stage
 source("./code/function_wrangle_data.r")
