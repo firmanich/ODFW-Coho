@@ -1,9 +1,11 @@
 function_model_search <- function(test_years = test_years,
                                 n_years_ahead = n_years_ahead,
                                 survey_projection = survey_projection,
-                                survey_type = survey_type,
+                                survey_GRTS_type = NA,
+                                survey_pop_type = NA,
                                 project = FALSE,
                                 no_covars = TRUE,
+                                survey_pop = NA,
                                 output = NA){
   
   #@test_years are the years that you are testing, not training
@@ -152,15 +154,10 @@ function_model_search <- function(test_years = test_years,
                              mod = 1, #Why do you do this? It's just a place holder. Make it less jinky
                              mtry = output$exploratory$rf$best_mtry, 
                              ntree = output$exploratory$rf$best_ntree,
-                             survey_type = survey_type)
+                             survey_GRTS_type = survey_GRTS_type,
+                             survey_pop_type = survey_pop_type)
     }
     
-  }else{
-    rf_args <- expand.grid(test_years = test_years,
-                           n_years_ahead = 0,
-                           mod = 1:length(rf_forms[[1]]), 
-                           mtry = seq(3,11,2), 
-                           ntree = seq(200,1000,200)) # ,1000,200
   }
   mod_search$args$rf <- rf_args
   
@@ -302,7 +299,8 @@ function_model_search <- function(test_years = test_years,
       gam_args <- expand.grid(test_years = test_years,
                               n_years_ahead = n_years_ahead,
                               mod = 1,
-                              survey_type = survey_type)
+                              survey_GRTS_type = survey_GRTS_type,
+                              survey_pop_type = survey_pop_type)
     }
   }else{
     gam_args <- expand.grid(test_years = test_years,
@@ -376,15 +374,15 @@ function_model_search <- function(test_years = test_years,
                             n_years_ahead = n_years_ahead,
                             mod = 1, 
                             sp = output$exploratory$sdm$best_sp, 
-                            st = output$exploratory$sdm$best_st,
-                            survey_type = NA)
+                            st = output$exploratory$sdm$best_st)
     if(survey_projection){
       sdm_args <- expand.grid(test_years = test_years,
                               n_years_ahead = n_years_ahead,
                               mod = 1, 
                               sp = output$exploratory$sdm$best_sp, 
                               st = output$exploratory$sdm$best_st,
-                              survey_type = survey_type)
+                              survey_GRTS_type = survey_GRTS_type,
+                              survey_pop_type = survey_pop_type)
       
     }
   }else{
@@ -398,5 +396,6 @@ function_model_search <- function(test_years = test_years,
   
   mod_search$args$sdm <- sdm_args
 
+  # print(mod_search)
   return(mod_search)
 }

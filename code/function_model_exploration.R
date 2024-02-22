@@ -3,10 +3,14 @@ function_model_exploration <- function(stage = stage,
                               no_covars = no_covars, 
                               project = project,
                               survey_projection = FALSE,
-                              survey_type = NA,
+                              survey_GRTS_type = NA,
+                              survey_pop_type = NA,
                               # output = output,
                               mod_search = mod_search,
+                              survey_pop = NA,
                               df = df,
+                              maxYr = NA,
+                              n_test = NA,
                               save_output = FALSE){
   
 
@@ -16,6 +20,7 @@ function_model_exploration <- function(stage = stage,
   #@output is a saved tagged list of both exploratory and projected output
   #Grab the model search arguments from the saved tagged list
   # mod <- "gam"
+  initTime <- Sys.time()
   search <- mod_search$args[[mod]]
   # print(paste0("searching over ",mod))
   # print(search)
@@ -33,9 +38,14 @@ function_model_exploration <- function(stage = stage,
   
   for(i in 1:nforms){
     
+    print(paste("**************", i, " out of ", nforms, "**********"))
+    print(paste(maxYr, search$n_years_ahead[i], n_test, 1))
+
+    maxTrainYr <- maxYr - search$n_years_ahead[i] - n_test 
+      
     #grab the training data
     train <- dplyr::filter(df,
-                          yr < (search$test_years[i] - search$n_years_ahead[i] + 1)) %>%
+                          yr <= maxTrainYr) %>%
       dplyr::mutate(fYr = as.factor(yr))
     
     #Do this order the mesh get screwed up if you don't order the data
@@ -43,44 +53,74 @@ function_model_exploration <- function(stage = stage,
       with(train, order(ID_Num, yr)),
     ]
     
+    cat("\n ********* train data years with complete data \n",range(train$yr),"\n\n")
+    # print(dim(train))
 
-    if(!survey_projection){
-      # cat("\n ********* Forward projection for years",search$test_years[i],"\n")
-      cat("train data\n")
-      print(dim(train))
-      print(table(train$yr))
-    }    
+    # if(!is.na(survey_pop)){
+    #   print("test survey pop")
+    # }
+
+    # if(!survey_projection){
+    #   # cat("\n ********* Forward projection for years",search$test_years[i],"\n")
+    #   cat("train data\n")
+    #   print(dim(train))
+    #   print(table(train$yr))
+    # }    
+    
     
     if(survey_projection){
-      #Training data up to forecast year
-        s_i <- unlist(strsplit(search$survey_type[[i]],split=", ",fixed=TRUE))
-        s_y <- min(search$test_years):search$test_years[i]
-        cat("\n********** Survey evalulation type",s_i, "for years",s_y,"\n")
+      #Reduce the training data to the years outside of the test years
 
-                
-        tmp_s <- df %>%
-          filter(yr %in% s_y)
-        
-        #Keep the surveys and survey years you want
-        survey_yr <- df %>%
-          filter(yr %in% s_y) %>%
-          filter(Panel %in% s_i)
-        
+      #These are all of your sampling rules
+      s_i <- unlist(strsplit(search$survey_GRTS_type[[i]],split=", ",fixed=TRUE))
+      # pop_i <- unlist(strsplit(search$survey_pop_type[[i]],split=", ",fixed=TRUE))
+      pop_i <- unlist(search$survey_pop_type[[i]])
+      s_y <- (maxTrainYr+1):(search$test_years[i]-search$n_years_ahead[i])
+      
+      cat("\nThese are the populations that are left **OUT** of the survey years\n")
+      print(paste(t(pop_i), collapse = ","))
+      cat("\nThese are the GRTS that are left **IN** of the survey years\n")
+      print(s_i)
+      cat("\nThese are the survey years that get censored\n")
+      print(s_y)
 
+      
+
+              
+      tmp_s <- df %>%
+        filter(yr %in% s_y)
+      
+      #Keep the surveys and survey years you want
+      survey_yrs <- df %>%
+        filter(yr %in% s_y) %>% #give me only the years
+        filter(Panel %in% s_i) %>%
+        filter(!PopGrp %in% pop_i)
+        
+      # print(survey_yrs$PopGrp)
+      # print(as.character(pop_i))
+        cat("\n********** Years with survey rules \n",range(survey_yrs$yr),"\n\n")
+        
         #combine the all data from all of the years between the RMSE years
         #with only the survey from RMSE years.
-        train <- rbind(df[df$yr<min(search$test_years),],
-                       survey_yr)
-        train$fYr <- as.factor(train$yr)
-        train <- train[with(train, order(ID_Num, yr)),]
+        train <- rbind(train,
+                       survey_yrs)
         
-        print("s_i")
-        print(s_i)
-        print("df")
-        print(table(df$fYr, df$Panel))
-        print("table(train$fYr)")
-        print(table(train$fYr))
-        print(table(train$fYr, train$Panel))
+        cat(" ********** this is the train data combined with the survey data that has rules \n", range(train$yr),"\n\n")
+        # train$fYr <- as.factor(train$yr)
+        # train <- train[with(train, order(ID_Num, yr)),]
+        
+        # print("s_i")
+        # print(s_i)
+        # print("number pop_i")
+        # # print(length(!(unique(df$popGrp)%in%survey_pop_type)))
+        # # print("df")
+        # print("table(train$fYr)")
+        # print(table(df$fYr, df$Panel))
+        # print(table(df$fYr, df$PopGrp))
+        # print("table(train$fYr)")
+        # print(table(train$fYr))
+        # print(table(train$fYr, train$Panel))
+        # print(table(train$fYr, train$PopGrp))
     }
     
     #Grab the test year: either the last year of the training data or projection year    
@@ -90,19 +130,19 @@ function_model_exploration <- function(stage = stage,
     }
     if(project){
       #Test data based  on the number of projection years
-      test <- dplyr::filter(df, yr %in% (search$test_years[i] - search$n_years_ahead[i]):search$test_years[i]) %>%
-        dplyr::mutate(fYr = as.factor(yr))
+      # test <- dplyr::filter(df, yr %in% (search$test_years[i] - search$n_years_ahead[i]):search$test_years[i]) %>%
+      #   dplyr::mutate(fYr = as.factor(yr))
       
-      if(survey_projection){
-        #you want to predict for all locations
+      # if(survey_projection){
+      #   #you want to predict for all locations
         test <- dplyr::filter(df, yr %in% (search$test_years[i])) %>%
           dplyr::mutate(fYr = as.factor(yr))
         # print("survey train project")
         # print(dim(test))
-      }else{
-        # print("temporal train project")
-        # print(dim(test))
-      }
+      # }else{
+      #   # print("temporal train project")
+      #   # print(dim(test))
+      # }
     }
     
     #just use the same mesh for all sdm projections and explorations
@@ -123,6 +163,11 @@ function_model_exploration <- function(stage = stage,
       best_mod_frm <- output$exploratory[[mod]]$best_mod #From saved exploration file
 
       if(mod=="sdm"){
+        print("data that goes into fitting sdm model")
+        print(t(table(train$yr)))
+        print("data that goes into extra argument")
+        print(unique(test$yr[test$yr>max(train$yr)]))
+        
         fit <- sdmTMB(best_mod_frm,
                       data = train,
                       mesh = mesh,
@@ -146,15 +191,15 @@ function_model_exploration <- function(stage = stage,
 
         
         #Even if you are projecting 2 years into the future, only compare the last of the projection years
-        print("rmse")
-        print(length(test$dens[test$yr==search$test_years[i]]))
+        # print("rmse")
+        # print(length(test$dens[test$yr==search$test_years[i]]))
         # print("summary")
         # print(summary(fit))
         #The RMSE is for all survey locations for the survey year.
         search$rmse[i] = sqrt(mean((test$dens[test$yr==search$test_years[i]] -
                                            exp(pred$est[test$yr==search$test_years[i]]))^2))
 
-        write.csv(pred,file = paste("pred",survey_type,survey_projection,search$test_years[i],search$n_years_ahead[i],".csv", sep=""))
+        # write.csv(pred,file = paste("pred",survey_type,survey_projection,search$test_years[i],search$n_years_ahead[i],".csv", sep=""))
         search$AIC[i] = AIC(fit)
       }
 
@@ -253,8 +298,11 @@ function_model_exploration <- function(stage = stage,
     }
 
 
-    cat("\n rmse",
-                round(search$rmse[i],3),"*******\n")
+    cat("\n ********* rmse",
+                round(search$rmse[i],3),"*******\n\n\n\n")
+    
+    print(paste("************** Minutes remaining ", (Sys.time()-initTime) * (nforms - i)/i, "**********"))
+    
   }#end model forms
 
   #Update the output for each model iteration
