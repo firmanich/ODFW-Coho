@@ -4,7 +4,7 @@ library(sf)
 library("lemon")
 library(ggplot2)
 
-life_stage <- "Spwn"
+life_stage <- "rear"
 
 #Get the stream lines
 # tmpDir <- "C:/noaa/large_data/coho_stream_net/CohoNetmapClip.shp"

@@ -8,25 +8,28 @@ require(sdmTMB)
 library(tidyr)
 library(dplyr)
 
-study_pops <- c('Nehalem', 'Alsea', 'Coos', 'Lower Umpqua')
+study_pops <- c('Nehalem',
+                'Alsea',
+                'Coos',
+                'Lower Umpqua')
 
 #This is counter intuitive, but these are the populations left out of the analysis
-# pops_in_core <- read.csv(paste0('C:/noaa/LARGE_Data/1DataExportJuv_2023_04_18.csv'),
-#                 header=TRUE,
-#                 dec=".",
-#                 stringsAsFactors = FALSE) %>%
-#   filter(!PopGrp %in% study_pops) %>%
-#   distinct(PopGrp)
+pops_in_core <- read.csv(paste0('C:/noaa/LARGE_Data/1DataExportJuv_2023_04_18.csv'),
+                header=TRUE,
+                dec=".",
+                stringsAsFactors = FALSE) %>%
+  filter(!PopGrp %in% study_pops) %>%
+  distinct(PopGrp)
 # # 
-# pops_not_in_core <- read.csv(paste0('C:/noaa/LARGE_Data/1DataExportJuv_2023_04_18.csv'),
-#                              header=TRUE,
-#                              dec=".",
-#                              stringsAsFactors = FALSE) %>%
-#   filter(PopGrp %in% study_pops) %>%
-#   distinct(PopGrp)
-# survey_pop_list <- list("pops_in_core" = pops_in_core,
-#                         # "pops_not_in_core" = pops_not_in_core,
-#                         "allGrps" = c("no groups"))
+pops_not_in_core <- read.csv(paste0('C:/noaa/LARGE_Data/1DataExportJuv_2023_04_18.csv'),
+                             header=TRUE,
+                             dec=".",
+                             stringsAsFactors = FALSE) %>%
+  filter(PopGrp %in% study_pops) %>%
+  distinct(PopGrp)
+survey_pop_list <- list("pops_in_core" = pops_in_core,
+                        # "pops_not_in_core" = pops_not_in_core,
+                        "allGrps" = c("no groups"))
 # 
 # all_pops <- read.csv(paste0('C:/noaa/LARGE_Data/1DataExportJuv_2023_04_18.csv'),
 #                              header=TRUE,
@@ -35,16 +38,16 @@ study_pops <- c('Nehalem', 'Alsea', 'Coos', 'Lower Umpqua')
 #   group_by(PopGrp) %>% 
 #   summarise(n = n())
 
+# pops_in_core <- read.csv(paste0('C:/noaa/LARGE_Data/DataSpwn_2023_05_04.csv'),
+#                      header=TRUE,
+#                      dec=".",
+#                      stringsAsFactors = FALSE) %>%
+#     filter(!PopGrp %in% study_pops) %>%
+#     distinct(PopGrp)
 
-pops_in_core <- read.csv(paste0('C:/noaa/LARGE_Data/DataSpwn_2023_05_04.csv'),
-                     header=TRUE,
-                     dec=".",
-                     stringsAsFactors = FALSE) %>%
-    filter(!PopGrp %in% study_pops) %>%
-    distinct(PopGrp)
-survey_pop_list <- list("pops_in_core" = unlist(pops_in_core),
-                        # "pops_not_in_core" = pops_not_in_core,
-                        "allGrps" = c("no groups"))
+# survey_pop_list <- list("pops_in_core" = unlist(pops_in_core),
+#                         # "pops_not_in_core" = pops_not_in_core,
+#                         "allGrps" = c("no groups"))
 
 
 # survey_pop_list <- lapply(as.matrix(all_pops), function(x) as.list(x))
@@ -53,18 +56,18 @@ survey_pop_list <- list("pops_in_core" = unlist(pops_in_core),
 survey_GRTS_list <- list(
   # c("Index")
   c("annual","annua")
-  ,c("annual","annua","three")
-  ,c("annua","annual","Index","nine","once","Supplemental","three")
+  # ,c("annual","annua","three")
+  # ,c("annua","annual","Index","nine","once","Supplemental","three")
 )
 
 for(maxYr in c(2021)){
   for(proj in c(TRUE)){
     for(mm in c('sdm')){ #model
-      for(ss in c('Spwn')){ #life stage
-        for(si in c('spatial')){ #testing models based on survey design or temporal forecasting
+      for(ss in c('rear')){ #life stage
+        for(si in c('pop')){ #testing models based on survey design or temporal forecasting
           
           if(si=="spatial"){
-            n_years_ahead <- c(0,1,2)
+            n_years_ahead <- c(0)
             survey_projection <- proj
           }
           if(si =="temporal"){
@@ -75,7 +78,7 @@ for(maxYr in c(2021)){
           #load the saved output
           cat('\n\n')
           if(si=="pop"){
-            file <- paste0("output/temporal_output_",ss,"_",maxYr,".rdata")
+            file <- paste0("output/temporal_output_",ss,"_",maxYr,"_2.rdata")
           }
           if(si!="pop"){
             file <- paste0("output/",si,"_output_",ss,"_",maxYr,".rdata")
@@ -93,7 +96,7 @@ for(maxYr in c(2021)){
                                         maxYr = maxYr,
                                         survey_pop = survey_pop_list,
                                         n_years_ahead = n_years_ahead, #predictions into the future, reduces the number of years in the training data set
-                                        n_test = 5) #Number of years in the RMSE model compariso\n, if it's 5 the you're comparing 2015 through 2019
+                                        n_test = 1) #Number of years in the RMSE model compariso\n, if it's 5 the you're comparing 2015 through 2019
           #save the updated output
           # save(output, file = file)
         }

@@ -5,42 +5,15 @@ library(grid)
 
 #Run through models
 plotlist <- list()
+rmse_out <- list()
+
 icnt <- 1
 library(mgcv)
 library(sdmTMB)
 library(randomForest)
 for(i in c('rear','Spwn')){
   stage <- i
-  load(paste0("output/temporal_output_",stage,"_",2019,".rData"))
-  
-  rf <- output$exploratory$rf$grid_search %>%
-    mutate(model = 'Random\nforest') %>%
-    group_by(model,mod,mtry,ntree) %>%
-    summarise(rmse_mean = mean(rmse)) %>%
-    group_by(model) %>%
-    filter(rmse_mean == min(rmse_mean)) %>%
-    select(model,rmse_mean)
-
-  sdm <- (output$exploratory$sdm$grid_search) %>%
-    mutate(model = "GLMM") %>%
-    group_by(model,mod,st,sp) %>%
-    summarise(rmse_mean = mean(rmse)) %>%
-    group_by(model) %>%
-    filter(rmse_mean == min(rmse_mean)) %>%
-    select(model,rmse_mean)
-
-  gam <- output$exploratory$gam$grid_search %>%
-    mutate(model = 'GAMM') %>%
-    group_by(model,mod) %>%
-    summarise(rmse_mean = mean(rmse)) %>%
-    group_by(model) %>%
-    filter(rmse_mean == min(rmse_mean)) %>%
-    select(model,rmse_mean)
-  
-  rmse_mean1 <- dplyr::bind_rows(gam,sdm,rf) %>% 
-    dplyr::group_by(model) %>%
-    mutate(n_years_ahead = 0) %>%
-    relocate(n_years_ahead, .after = model)
+  load(paste0("output/temporal_output_",stage,"_",2021,".rData"))
   
   gam <- (output$project$gam$grid_search) %>%  
     mutate(model = "GAMM") %>% 
@@ -55,14 +28,17 @@ for(i in c('rear','Spwn')){
     dplyr::select(c(model,n_years_ahead,rmse))
   
   
-  rmse_mean <- dplyr::bind_rows(gam,sdm,rf) %>% 
+  rmse_mean[[icnt]] <- dplyr::bind_rows(gam,sdm,rf) %>% 
     dplyr::group_by(model,n_years_ahead) %>%
     dplyr::summarise(rmse_mean = mean(rmse)) %>%
-    dplyr::bind_rows(rmse_mean1)
+    group_by(model) %>% 
+    mutate(min = min(rmse_mean)) %>% 
+    mutate(rel_rmse = (rmse_mean-min)/min)
+  # dplyr::bind_rows(rmse_mean1)
   
   ifelse(stage=="rear", lims <- c(140,380), lims <- c(8,35))
   
-  plotlist[[icnt]] <- ggplot(aes(y = rmse_mean, x = model, fill = as.factor(n_years_ahead)), 
+  plotlist[[icnt]] <- ggplot(aes(y = rmse_mean[[icnt]], x = model, fill = as.factor(n_years_ahead)), 
                data = rmse_mean[,]) + 
     geom_bar(position="dodge", stat="identity") +
     scale_fill_grey()+
@@ -75,18 +51,9 @@ for(i in c('rear','Spwn')){
   icnt <- icnt + 1
 }
 
-gg <- ggpubr::ggarrange(plotlist = plotlist,
-                        ncol = 2,
-                        legend = 'right',
-                        labels = c("A","B"),
-                        common.legend = TRUE)
+gg <- ggarrange()
 
-gg <- ggpubr::annotate_figure(gg,
-                left = ggpubr::text_grob("Mean RMSE 2017 to 2021", color = "black", rot = 90),
-                fig.lab = "", fig.lab.face = "bold")
-
-print(gg)
-
+# rmse_mean 
 # ggsave(file = "./output/ggplot_predictive_rmse_2017_2021.png", gg, device = "png", dpi = 300, height = 4, width = 6, units="in")
 
   # dev.off()

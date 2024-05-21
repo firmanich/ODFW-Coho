@@ -133,7 +133,7 @@ gg <- ggpubr::annotate_figure(gg,
 
 print(gg)
 
-ggsave(file = paste("./output/ggplot_predictive_rmse_",endYr - 4,"_", endYr,".png"), gg, device = "png", dpi = 300, height = 7, width = 7, units="in")
+# ggsave(file = paste("./output/ggplot_predictive_rmse_",endYr - 4,"_", endYr,".png"), gg, device = "png", dpi = 300, height = 7, width = 7, units="in")
 
-dev.off()
+# dev.off()
 # 

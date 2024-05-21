@@ -1,11 +1,12 @@
 Life_stage <- "Spwn"
 
 
-load(paste0("C:/noaa/projects/ODFW-Coho/output/temporal_output_",Life_stage,"_2021.rData"))
+load(paste0("C:/noaa/projects/ODFW-Coho/output/temporal_output_",Life_stage,"_2021_2.rData"))
 
 
 
 marVars <- c('StrmSlope','WidthM','SolMean','IP_COHO','OUT_DIST','StrmPow','MWMT_Index','W3Dppt','SprPpt')
+varNames <- c('Stream \nslope','Mean stream\nwidth','Solar \nshading','Coho intrinsic\npotential','Outlet \ndistance','Stream \npower','Weekly max\ntemperature','Max three day\nwinter precip','Total spring\nprecip')
 
 # df_raw <- read.csv("juvData.csv")
 
@@ -38,7 +39,21 @@ for(i in marVars){
   df_tmp2$fYr <- as.factor(df_tmp2$yr)
   df_tmp <- rbind(df_tmp2, df_tmp)
   
-  x[[icnt]] <- predict(output$exploratory$sdm$best_fit, newdata =  df_tmp, se_fit = TRUE)
+  # mesh <- sdmTMB::make_mesh(df, c("UTM_E_km", "UTM_N_km"), cutoff = 10)
+  # fit <- sdmTMB(output$exploratory$sdm$best_mod,
+  #               data = df,
+  #               mesh = mesh,
+  #               family = tweedie(link = "log"),
+  #               time = "yr",
+  #               spatial = output$exploratory$sdm$best_sp,
+  #               spatiotemporal = output$exploratory$sdm$best_st,
+  #               anisotropy = TRUE,
+  #               # extra_time = unique(test$yr[test$yr>max(train$yr)]), #Why is this necessary if the years are the same?
+  #               silent=TRUE)
+
+  fit <- output$exploratory$sdm$best_fit
+  
+  x[[icnt]] <- predict(fit, newdata =  df_tmp, se_fit = TRUE)
   x[[icnt]]$x <- df_tmp[,i]
   
   x[[icnt]] <- x[[icnt]][x[[icnt]][,i]>(-2) & x[[icnt]][,i]<(5), ]
@@ -52,7 +67,7 @@ for(i in marVars){
                     ymax = exp(est - 0.5*est_se^2) + 1.64*exp(est)* est_se),
                 alpha = 0.2) +
     theme_bw() +
-    xlab(paste(i))
+    xlab(varNames[icnt])
   
   # hist()
   
@@ -71,8 +86,8 @@ for(i in marVars){
 
 gg <- ggpubr::ggarrange(plotlist = g)
 
-ggsave(file = paste0("./output/ggplot_marginal_plot_",Life_stage,".png"), 
-       gg, 
+ggsave(file = paste0("./output/ggplot_marginal_plot_",Life_stage,".png"),
+       gg,
        device = "png", dpi = 500, height = 6, width = 6, units="in")
 
 
