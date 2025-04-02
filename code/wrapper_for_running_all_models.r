@@ -75,7 +75,7 @@ for(Stage in c('Spwn')){
             
             if(si =="temporal"){ #this scenario of n_years-ahead <- 0 and survey_projection <- FALSE determines the best fit model given all of the data
               n_years_ahead <- c(0)
-              survey_projection <- proj #Keep this set to false for Temporal analysis
+              survey_projection <- FALSE #Keep this set to false for Temporal analysis
             }
             if(si=="spatial"){ #Given the best fit model from above, now ask questions about temporal and spatial projects.
               n_years_ahead <- c(0,1,2)
