@@ -44,7 +44,8 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt"))
+                      SprPpt +
+                      maxtemp07da1_Summer"))
       ,m2 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
@@ -55,7 +56,8 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt + 
+                      SprPpt +
+                      maxtemp07da1_Summer +
                       yr"))
       ,m3 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
@@ -67,7 +69,8 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt + 
+                      SprPpt +
+                      maxtemp07da1_Summer +
                       UTM_E_km +
                       UTM_N_km")) #Rf interactions are implicit
       ,m4 = formula(gsub("[\r\n\t]", "","dens ~
@@ -80,7 +83,8 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt + 
+                      SprPpt +
+                      maxtemp07da1_Summer +
                       yr +
                       UTM_E_km +
                       UTM_N_km")) #Rf interactions are implicit
@@ -96,7 +100,9 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt"))
+                      SprPpt +
+                      maxtemp07da1_Summer +
+                      maxtemp07da1_Fall"))
       ,m2 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
                       WidthM +
@@ -107,7 +113,9 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt + 
+                      SprPpt +
+                      maxtemp07da1_Summer +
+                      maxtemp07da1_Fall +
                       yr"))
       ,m3 = formula(gsub("[\r\n\t]", "","dens ~
                       StrmSlope +
@@ -119,7 +127,9 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt + 
+                      SprPpt +
+                      maxtemp07da1_Summer +
+                      maxtemp07da1_Fall +
                       UTM_E_km +
                       UTM_N_km")) #Rf interactions are implicit
       ,m4 = formula(gsub("[\r\n\t]", "","dens ~
@@ -132,7 +142,9 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt + 
+                      SprPpt +
+                      maxtemp07da1_Summer +
+                      maxtemp07da1_Fall +
                       yr +
                       UTM_E_km +
                       UTM_N_km")) #Rf interactions are implicit
@@ -158,6 +170,12 @@ function_model_search <- function(test_years = test_years,
                              survey_pop_type = survey_pop_type)
     }
     
+  }else{
+    rf_args <- expand.grid(test_years = test_years,
+                           n_years_ahead = 0,
+                           mod = 1:length(rf_forms[[1]]), 
+                           mtry = c(3,5,7,9,11), 
+                           ntree = seq(200,1000,200))
   }
   mod_search$args$rf <- rf_args
   
@@ -172,6 +190,7 @@ function_model_search <- function(test_years = test_years,
                       s(StrmPow,k=4) +
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) "))
     ,m2 = formula(gsub("[\r\n\t]", "","dens ~
@@ -183,7 +202,8 @@ function_model_search <- function(test_years = test_years,
                         s(StrmPow,k=4) +
                         fSTRM_ORDER +
                         s(W3Dppt, k = 4) +
-                        s(SprPpt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
+                      s(SprPpt, k = 4) +
                         s(MWMT_Index,k=4) +
                        s(yr, k = 4)"))
     ,m3 = formula(gsub("[\r\n\t]", "","dens ~
@@ -195,6 +215,7 @@ function_model_search <- function(test_years = test_years,
                       s(StrmPow,k=4) +
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) +
                       s(UTM_E_km,UTM_N_km)"))
@@ -207,6 +228,7 @@ function_model_search <- function(test_years = test_years,
                       s(StrmPow,k=4) +
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) +
                       s(UTM_E_km,UTM_N_km,yr)"))
@@ -219,6 +241,7 @@ function_model_search <- function(test_years = test_years,
                       s(StrmPow,k=4) +
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) +
                       s(UTM_E_km,UTM_N_km) + s(yr, k = 4)"))
@@ -233,6 +256,8 @@ function_model_search <- function(test_years = test_years,
                       s(StrmPow,k=4) +
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
+                      s(maxtemp07da1_Fall, k = 4) + 
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) "))
     ,m2 = formula(gsub("[\r\n\t]", "","dens ~
@@ -244,7 +269,9 @@ function_model_search <- function(test_years = test_years,
                         s(StrmPow,k=4) +
                         fSTRM_ORDER +
                         s(W3Dppt, k = 4) +
-                        s(SprPpt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
+                      s(maxtemp07da1_Fall, k = 4) + 
+                      s(SprPpt, k = 4) +
                         s(MWMT_Index,k=4) +
                       s(yr, k = 4)"))
     ,m3 = formula(gsub("[\r\n\t]", "","dens ~
@@ -256,6 +283,8 @@ function_model_search <- function(test_years = test_years,
                       s(StrmPow,k=4) +
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
+                      s(maxtemp07da1_Fall, k = 4) + 
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) +
                       s(UTM_E_km,UTM_N_km)"))
@@ -268,6 +297,8 @@ function_model_search <- function(test_years = test_years,
                       s(StrmPow,k=4) +
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
+                      s(maxtemp07da1_Fall , k = 4) + 
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) +
                       s(UTM_E_km,UTM_N_km, yr)"))
@@ -280,6 +311,8 @@ function_model_search <- function(test_years = test_years,
                       s(StrmPow,k=4) +
                       fSTRM_ORDER +
                       s(W3Dppt, k = 4) +
+                      s(maxtemp07da1_Summer, k = 4) + 
+                      s(maxtemp07da1_Fall, k = 4) + 
                       s(SprPpt, k = 4) +
                       s(MWMT_Index,k=4) +
                       s(UTM_E_km,UTM_N_km) + s(yr, k = 4)"))
@@ -321,7 +354,8 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt
+                      SprPpt +
+                      maxtemp07da1_Summer 
                         "))
                     ,m2 = formula(gsub("[\r\n\t]", "","dens ~ 1 +
                       StrmSlope +
@@ -333,7 +367,8 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
-                      SprPpt + 
+                      SprPpt +
+                      maxtemp07da1_Summer +
                       (1|fYr)
                         "))
   ),
@@ -348,6 +383,8 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
+                      maxtemp07da1_Summer + 
+                      maxtemp07da1_Fall + 
                       SprPpt 
                         "))
     ,m2 = formula(gsub("[\r\n\t]", "","dens ~ 1 +
@@ -360,6 +397,8 @@ function_model_search <- function(test_years = test_years,
                       fSTRM_ORDER +
                       MWMT_Index +
                       W3Dppt + 
+                      maxtemp07da1_Summer + 
+                      maxtemp07da1_Fall + 
                       SprPpt +
                       (1|fYr)
                         "))
@@ -389,8 +428,8 @@ function_model_search <- function(test_years = test_years,
     sdm_args <- expand.grid(test_years = test_years,
                             n_years_ahead = 0,
                             mod = 1:length(sdm_forms[[1]]), #spawners and juv have the same lengths
-                            sp = c(TRUE,FALSE), 
-                            st = c("iid",FALSE)
+                            sp = c('on',"off"), #c(TRUE,FALSE), 
+                            st = c('iid',"off") #c("iid",FALSE)
     )
   }
   

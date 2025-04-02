@@ -7,10 +7,10 @@ library(grid)
 
 plotlist <- list()
 rmse_mean <- list()
-dataType <- "spatial"
+# dataType <- "spatial"
 endYr <- 2021
 icnt <- 1
-for(i in c("rear","Spwn")){
+for(i in c("rear")){
   rmse_mean[[icnt]] <- NA
   for(sp in c("spatial",'temporal')){
     stage <- i
@@ -21,29 +21,29 @@ for(i in c("rear","Spwn")){
     if(sp=="spatial"){
       gam <- output$project$gam$grid_search %>%  
         mutate(model = "GAMM") %>% 
-        dplyr::select(c(model,survey_type,rmse))
+        dplyr::select(c(model,survey_GRTS_type, rmse))
       
       sdm <- output$project$sdm$grid_search %>%  
         mutate(model = "GLMM") %>% 
-        dplyr::select(c(model,survey_type,rmse))
+        dplyr::select(c(model,survey_GRTS_type, rmse))
       
       rf <- output$project$rf$grid_search %>%  
         mutate(model = "Random forest") %>% 
-        dplyr::select(c(model,survey_type,rmse))
+        dplyr::select(c(model,survey_GRTS_type, rmse))
       
       if(sum(is.na(rmse_mean[[icnt]]))){
         rmse_mean[[icnt]] <- dplyr::bind_rows(gam,sdm,rf) %>% 
-          dplyr::group_by(model,survey_type) %>%
+          dplyr::select(c(model,survey_GRTS_type, rmse)) %>% 
           dplyr::summarise(rmse_mean = mean(rmse)) #%>%
         
         rmse_mean[[icnt]] <- as.data.frame(rmse_mean[[icnt]])
-        rmse_mean[[icnt]]$survey_type <- unlist(lapply(rmse_mean[[icnt]]$survey_type, function(x){paste(x,collapse = ",")}))
+        rmse_mean[[icnt]]$survey_GRTS_type <- unlist(lapply(rmse_mean[[icnt]]$survey_GRTS_type, function(x){paste(x,collapse = ",")}))
         
         rmse_mean[[icnt]]$survey <- as.factor(rmse_mean[[icnt]]$survey)
         levels(rmse_mean[[icnt]]$survey) <- c("Exploratory", "No years ahead\nAnnual sites", "No years ahead\nAnnual + Tri-annual sites", "No years ahead\nIndex sites")
       }else{
         tmp <- dplyr::bind_rows(gam,sdm,rf) %>% 
-          dplyr::group_by(model,survey_type) %>%
+          dplyr::select(c(model,survey_GRTS_type, rmse)) %>% 
           dplyr::summarise(tmp = mean(rmse)) #%>%
         
         tmp <- as.data.frame(tmp)
@@ -134,7 +134,7 @@ gg <- ggpubr::annotate_figure(gg,
 
 print(gg)
 
-# ggsave(file = paste("./output/ggplot_predictive_rmse_",endYr - 4,"_", endYr,".png"), gg, device = "png", dpi = 300, height = 7, width = 7, units="in")
+ggsave(file = paste0("./output/Figure_1",i,"_",endYr - 4,"_", endYr,".png"), gg, device = "png", dpi = 300, height = 7, width = 7, units="in")
 
 # dev.off()
 # 

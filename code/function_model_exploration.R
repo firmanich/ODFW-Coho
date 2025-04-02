@@ -41,8 +41,9 @@ function_model_exploration <- function(stage = stage,
     print(paste("**************", i, " out of ", nforms, "**********"))
     print(paste(maxYr, search$n_years_ahead[i], n_test, 1))
 
-    maxTrainYr <- maxYr - search$n_years_ahead[i] - n_test 
-      
+    maxTrainYr <- maxYr - search$n_years_ahead[i] - n_test + 1
+    
+    print(paste("max train year", maxTrainYr)) 
     #grab the training data
     train <- dplyr::filter(df,
                           yr <= maxTrainYr) %>%
@@ -54,25 +55,15 @@ function_model_exploration <- function(stage = stage,
     ]
     
     cat("\n ********* train data years with complete data \n",range(train$yr),"\n\n")
-    # print(dim(train))
+    print(dim(train))
 
-    # if(!is.na(survey_pop)){
-    #   print("test survey pop")
-    # }
 
-    # if(!survey_projection){
-    #   # cat("\n ********* Forward projection for years",search$test_years[i],"\n")
-    #   cat("train data\n")
-    #   print(dim(train))
-    #   print(table(train$yr))
-    # }    
-    
-    
     if(survey_projection){
       #Reduce the training data to the years outside of the test years
 
       #These are all of your sampling rules
       s_i <- unlist(strsplit(search$survey_GRTS_type[[i]],split=", ",fixed=TRUE))
+      
       # pop_i <- unlist(strsplit(search$survey_pop_type[[i]],split=", ",fixed=TRUE))
       pop_i <- unlist(search$survey_pop_type[[i]])
       s_y <- (maxTrainYr+1):(search$test_years[i]-search$n_years_ahead[i])
@@ -87,17 +78,12 @@ function_model_exploration <- function(stage = stage,
       
 
               
-      tmp_s <- df %>%
-        filter(yr %in% s_y)
-      
       #Keep the surveys and survey years you want
       survey_yrs <- df %>%
         filter(yr %in% s_y) %>% #give me only the years
-        filter(Panel %in% s_i) %>%
-        filter(!PopGrp %in% pop_i)
+        filter(Panel %in% s_i) %>%#subset by panel
+        filter(!(PopGrp %in% pop_i))
         
-      # print(survey_yrs$PopGrp)
-      # print(as.character(pop_i))
         cat("\n********** Years with survey rules \n",range(survey_yrs$yr),"\n\n")
         
         #combine the all data from all of the years between the RMSE years
@@ -109,18 +95,6 @@ function_model_exploration <- function(stage = stage,
         # train$fYr <- as.factor(train$yr)
         # train <- train[with(train, order(ID_Num, yr)),]
         
-        # print("s_i")
-        # print(s_i)
-        # print("number pop_i")
-        # # print(length(!(unique(df$popGrp)%in%survey_pop_type)))
-        # # print("df")
-        # print("table(train$fYr)")
-        # print(table(df$fYr, df$Panel))
-        # print(table(df$fYr, df$PopGrp))
-        # print("table(train$fYr)")
-        # print(table(train$fYr))
-        # print(table(train$fYr, train$Panel))
-        # print(table(train$fYr, train$PopGrp))
     }
     
     #Grab the test year: either the last year of the training data or projection year    
@@ -168,26 +142,32 @@ function_model_exploration <- function(stage = stage,
         print("data that goes into extra argument")
         print(unique(test$yr[test$yr>max(train$yr)]))
         
-        fit <- sdmTMB(best_mod_frm,
+        print("sdm")
+        if(search$sp[i]=='off' & search$st[i]=='off'){
+          myAniso <- FALSE
+        }else{
+          myAniso <- TRUE
+        }
+        
+        fit <- tryCatch(sdmTMB(best_mod_frm,
                       data = train,
                       mesh = mesh,
                       family = tweedie(link = "log"),
                       time = "yr",
                       spatial = search$sp[i],
                       spatiotemporal = search$st[i],
-                      anisotropy = TRUE,
+                      anisotropy = myAniso,
                       extra_time = unique(test$yr[test$yr>max(train$yr)]), #Why is this necessary if the years are the same?
-                      silent=TRUE)
-        # print("sdm")
-        # print("train")
-        # print(dim(train))
-        # print("test")
-        # print(dim(test))
+                      silent=TRUE),
+                      error = function(e) e,
+                      warning = function(w) w)
 
         #Model prediction
-        pred <- predict(fit,
+        pred <- tryCatch(predict(fit,
                         test,
-                        re_form_iid = NA)
+                        re_form_iid = NA),
+                        error = function(e) e,
+                        warning = function(w) w)
 
         
         #Even if you are projecting 2 years into the future, only compare the last of the projection years
@@ -256,33 +236,41 @@ function_model_exploration <- function(stage = stage,
       }
 
       if(mod=="sdm"){
-        fit <- sdmTMB(mod_frm,
+        if(search$sp[i]=='off' & search$st[i]=='off'){
+          myAniso <- FALSE
+        }else{
+          myAniso <- TRUE
+        }
+        fit <- tryCatch(sdmTMB(mod_frm,
                     data = train, 
                     mesh = mesh,
                     family = tweedie(link = "log"),
                     time = "yr",
                     spatial = search$sp[i],
                     spatiotemporal = search$st[i],
-                    anisotropy = TRUE,
+                    anisotropy = myAniso,
                     extra_time = unique(test$yr[test$yr>max(train$yr)]), #Why is this necessary if the years are the same?
-                    silent=TRUE)
-        pred <- predict(fit, test, re_form_iid = NA)
+                    silent=TRUE),
+                    error = function(e) "error",
+                    warning = function(w) "warning")
+        pred <- tryCatch(predict(fit,
+                            test,
+                            re_form_iid = NA),
+                         error = function(e) "error",
+                         warning = function(w) "warning")
         #Save the root mean square error in the search
         # search$rmse[i] = sqrt(mean((test$dens - exp(pred$est))^2))
-        search$rmse[i] = sqrt(mean((test$dens[test$yr==search$test_years[i]] -
-                                      exp(pred$est[test$yr==search$test_years[i]]))^2))
-        search$AIC[i] <- AIC(fit)
+        if(length(pred)!=1){
+          search$rmse[i] <- sqrt(mean((exp(pred$est)-test$dens)[test$yr == search$test_years[i]]^2))
+          search$AIC[i] <- AIC(fit)
+        }
       }
 
       if(mod=="gam"){
-        # search$mod[i] <- i
-        # search$args[i] <- NA
-        # print(mod_frm)
+        print(range(train$yr))
+        print(names(train))
         fit <-  gam(mod_frm, data=train, family = "tw")
         pred <- predict(fit,test)
-        # print(mod_frm)
-        # print(test$dens)
-        # print(head(pred))
         search$rmse[i] <- sqrt(mean((exp(pred)-test$dens)^2))
         search$AIC[i] <- AIC(fit)
       }
@@ -344,12 +332,11 @@ function_model_exploration <- function(stage = stage,
         group_by(mod,sp,st) %>%
         summarise(mean = mean(rmse)) %>% #mean RMSE over n_test years
         subset(mean == min(mean)) #row with lowest mean
-      print(indx)
+      
       best_mod_frm <- mod_search$form[[mod]][[stage]][[indx$mod]] #Get the model index, not the grid index
       best_sp <- indx$sp
       best_st <- indx$st
       #re-fit best model
-      print(mod_search$form[[mod]][[stage]])
       #refitting best fit model with all of the data for all years
       train <- df %>% dplyr::mutate(fYr = as.factor(yr))
       #Create the mesh
@@ -387,7 +374,6 @@ function_model_exploration <- function(stage = stage,
         filter(mean == min(mean))# %>% #lowest RMSE
         # pull(mod) #best model
       best_mod_frm <- mod_search$form[[mod]][[stage]][[indx$mod]] #Get the model index, not the grid search index
-      print(mod_search$form[[mod]][[stage]])
       #refitting best fit model
       
       print("Based on mean RMSE")

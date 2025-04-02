@@ -22,7 +22,9 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
   print("wrangle data")
   df <- function_wrangle_data(stage=stage,
                               dir = root)
-  # print(head(df))
+  print("What the fuck*********************************")
+  print(dim(df))
+  print(table(df$survey_GRTS_type))
   #These are the tested years, as opposed to the training years
   test_years = seq(max(df$yr)-n_test+1, max(df$yr))
 

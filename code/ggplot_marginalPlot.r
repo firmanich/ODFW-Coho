@@ -5,12 +5,15 @@ load(paste0("C:/noaa/projects/ODFW-Coho/output/temporal_output_",Life_stage,"_20
 
 
 
-marVars <- c('StrmSlope','WidthM','SolMean','IP_COHO','OUT_DIST','StrmPow','MWMT_Index','W3Dppt','SprPpt')
-varNames <- c('Stream \nslope','Mean stream\nwidth','Solar \nshading','Coho intrinsic\npotential','Outlet \ndistance','Stream \npower','Weekly max\ntemperature','Max three day\nwinter precip','Total spring\nprecip')
+marVars <- c('StrmSlope','WidthM','SolMean','IP_COHO','OUT_DIST','StrmPow','MWMT_Index','W3Dppt','SprPpt','maxtemp07da1_Spring','maxtemp07da1_Summer','maxtemp07da1_Fall')
+# marVars <- c('StrmSlope','WidthM','SolMean','IP_COHO','OUT_DIST','StrmPow','MWMT_Index','W3Dppt','SprPpt','M07day_summer','M07day_fall')
+# varNames <- c('Stream \nslope','Mean stream\nwidth','Solar \nshading','Coho intrinsic\npotential','Outlet \ndistance','Stream \npower','Weekly max\ntemperature','Max three day\nwinter precip','Total spring\nprecip')
+varNames <- c('Stream \nslope','Mean stream\nwidth','Solar \nshading','Coho intrinsic\npotential','Outlet \ndistance','Stream \npower','Weekly max\ntemperature','Max three day\nwinter precip','Total spring\nprecip', 'M07_Spring', 'M07_Summer', 'M07_Fall')
+# varNames <- c('Stream \nslope','Mean stream\nwidth','Solar \nshading','Coho intrinsic\npotential','Outlet \ndistance','Stream \npower','Weekly max\ntemperature','Max three day\nwinter precip','Total spring\nprecip', 'M07_summer', "M07_fall")
 
 # df_raw <- read.csv("juvData.csv")
 
-par(mfrow=c(3,3))
+par(mfrow=c(3,4))
 g <- list()
 icnt<- 1
 testYr <- 2021
@@ -39,19 +42,19 @@ for(i in marVars){
   df_tmp2$fYr <- as.factor(df_tmp2$yr)
   df_tmp <- rbind(df_tmp2, df_tmp)
   
-  # mesh <- sdmTMB::make_mesh(df, c("UTM_E_km", "UTM_N_km"), cutoff = 10)
-  # fit <- sdmTMB(output$exploratory$sdm$best_mod,
-  #               data = df,
-  #               mesh = mesh,
-  #               family = tweedie(link = "log"),
-  #               time = "yr",
-  #               spatial = output$exploratory$sdm$best_sp,
-  #               spatiotemporal = output$exploratory$sdm$best_st,
-  #               anisotropy = TRUE,
-  #               # extra_time = unique(test$yr[test$yr>max(train$yr)]), #Why is this necessary if the years are the same?
-  #               silent=TRUE)
+  mesh <- sdmTMB::make_mesh(df, c("UTM_E_km", "UTM_N_km"), cutoff = 10)
+  fit <- sdmTMB(output$exploratory$sdm$best_mod,
+                data = df,
+                mesh = mesh,
+                family = tweedie(link = "log"),
+                time = "yr",
+                spatial = output$exploratory$sdm$best_sp,
+                spatiotemporal = output$exploratory$sdm$best_st,
+                anisotropy = TRUE,
+                # extra_time = unique(test$yr[test$yr>max(train$yr)]), #Why is this necessary if the years are the same?
+                silent=TRUE)
 
-  fit <- output$exploratory$sdm$best_fit
+  # fit <- output$exploratory$sdm$best_fit
   
   x[[icnt]] <- predict(fit, newdata =  df_tmp, se_fit = TRUE)
   x[[icnt]]$x <- df_tmp[,i]
@@ -86,7 +89,7 @@ for(i in marVars){
 
 gg <- ggpubr::ggarrange(plotlist = g)
 
-ggsave(file = paste0("./output/ggplot_marginal_plot_",Life_stage,".png"),
+ggsave(file = paste0("./output/ggplot_marginal_plot_",Life_stage,"_new.png"),
        gg,
        device = "png", dpi = 500, height = 6, width = 6, units="in")
 

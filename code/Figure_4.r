@@ -1,8 +1,12 @@
+library(sdmTMB)
 #Get the observed data
 rm(list = ls())
+
 # load("./output/output_rear.rData")
 load("./output/temporal_output_rear_2021.rData")
 obs_data <- output$exploratory$sdm$best_fit$data
+
+
 # obs_data2 <- output$exploratory$sdm$best_fit$data
 mod <- output$exploratory$sdm$best_mod
 st <- output$exploratory$sdm$best_st
@@ -24,6 +28,7 @@ obs_fit <- sdmTMB(mod,
 
 icnt <- 1
 for(p_i in na.omit(unique(obs_data$PopGrp))){
+  
         #Indexes for the full data      
         newData <- obs_data[obs_data$PopGrp==p_i,]
         
@@ -78,3 +83,4 @@ ind_2 <- ind %>%
 
 print("Percent of juvenile predictions out the 95%CI")
 print(sum(ind_2$obs > ind_2$upr | ind_2$obs < ind_2$lwr)/nrow(ind_2))
+

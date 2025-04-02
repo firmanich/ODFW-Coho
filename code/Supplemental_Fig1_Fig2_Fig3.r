@@ -17,8 +17,8 @@ rear <- output
 
 #Juveniles
 rear_df <- rear$exploratory$sdm$best_fit$data
-rear_quant <- quantile(df$dens, probs = c(0.05, 0.5, 0.95))
-mesh <- sdmTMB::make_mesh(df[df$yr <= 2021,], 
+rear_quant <- quantile(rear_df$dens, probs = c(0.05, 0.5, 0.95))
+mesh <- sdmTMB::make_mesh(rear_df[rear_df$yr <= 2021,], 
                           xy_cols = c("UTM_E_km","UTM_N_km"), cutoff = 10)
 rear_fit <- sdmTMB(rear$exploratory$sdm$best_mod, 
                    data = rear_df,
@@ -26,7 +26,7 @@ rear_fit <- sdmTMB(rear$exploratory$sdm$best_mod,
                    family = tweedie(link = "log"),
                    time = "yr",
                    spatial = rear$exploratory$sdm$best_sp,
-                   spatiotemporal = rear$exploratory$sdm$best_sp,
+                   spatiotemporal = rear$exploratory$sdm$best_st,
                    anisotropy = TRUE,
                    # extra_time = unique(obs_data$yr[obs_data$yr <= yr_i]), #Why is this necessary if the years are the same?
                    silent=TRUE)
@@ -64,8 +64,8 @@ ggsave(g, file = "./output/Supplemental_Fig_3.tiff", dpi = 300, width = 8, heigh
 
 #Spawners
 spwn_df <- spwn$exploratory$sdm$best_fit$data
-spwn_quant <- quantile(df$dens, probs = c(0.05, 0.5, 0.95))
-mesh <- sdmTMB::make_mesh(df[df$yr <= 2021,], 
+spwn_quant <- quantile(spwn_df$dens, probs = c(0.05, 0.5, 0.95))
+mesh <- sdmTMB::make_mesh(spwn_df[spwn_df$yr <= 2021,], 
                           xy_cols = c("UTM_E_km","UTM_N_km"), cutoff = 10)
 spwn_fit <- sdmTMB(spwn$exploratory$sdm$best_mod, 
                    data = spwn_df,
