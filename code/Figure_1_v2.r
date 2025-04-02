@@ -35,17 +35,17 @@ for(i in c("rear",'Spwn')){
   #load the exploratory
   load(paste0("output/",'temporal',"_output_",i,"_",endYr,".rData"))
   
-  gam <- output$project$gam$grid_search %>%  
+  gam <- output$exploratory$gam$grid_search %>%  
     mutate(model = "GAMM") %>% 
     mutate(survey_GRTS_type = "Train") %>% 
     dplyr::select(c(model,n_years_ahead,survey_GRTS_type,rmse))
   
-  sdm <- output$project$sdm$grid_search %>%  
+  sdm <- output$exploratory$sdm$grid_search %>%  
     mutate(model = "GLMM") %>% 
     mutate(survey_GRTS_type = "Train") %>% 
     dplyr::select(c(model,n_years_ahead,survey_GRTS_type, rmse))
   
-  rf <- output$project$rf$grid_search %>%  
+  rf <- output$exploratory$rf$grid_search %>%  
     mutate(model = "Random forest") %>% 
     mutate(survey_GRTS_type = "Train") %>% 
     dplyr::select(c(model,n_years_ahead,survey_GRTS_type, rmse))
@@ -71,7 +71,7 @@ for(i in c("rear",'Spwn')){
    group_by(model, n_years_ahead,survey,stage) %>%  
    summarize(rmse = mean(rmse)) %>% 
    group_by(n_years_ahead,survey,stage) %>%  
-   mutate(rel_rmse = (rmse - min(rmse))/min(rmse))
+   mutate(rel_rmse = rmse)#(rmse - min(rmse))/min(rmse))
  
  
 
@@ -83,5 +83,5 @@ for(i in c("rear",'Spwn')){
   facet_wrap(n_years_ahead~stage, ncol = 2, scales = "free") +
   theme_classic()
 
-ggsave(file = paste0("./output/Figure_1_",endYr - 4,"_", endYr,".png"), gg, device = "png", dpi = 300, height = 7, width = 7, units="in")
+# ggsave(file = paste0("./output/Figure_1_",endYr - 4,"_", endYr,".png"), gg, device = "png", dpi = 300, height = 7, width = 7, units="in")
 

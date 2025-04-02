@@ -9,7 +9,7 @@ library(tidyr)
 library(dplyr)
 
 # Stage <- 'rear' #rear or Spwn
-for(Stage in c('Spwn')){
+for(Stage in c('rear')){
   if(Stage=='Spwn'){
     file <- "spawn_dataHR17v4"
   }else{
@@ -69,12 +69,12 @@ for(Stage in c('Spwn')){
   
   for(maxYr in c(2021)){
     for(proj in c(TRUE)){
-      for(mm in c('gam','sdm','rf')){ #model
+      for(mm in c('gam')){ #model
         for(ss in Stage){ #life stage
           for(si in c('spatial')){ #testing models based on survey design or temporal forecasting, **** Both can be run from 'spatial' by looping over proj <- c(TRUE,FALSE)
             
             if(si =="temporal"){ #this scenario of n_years-ahead <- 0 and survey_projection <- FALSE determines the best fit model given all of the data
-              n_years_ahead <- c(0)
+              n_years_ahead <- c(0,1,2)
               survey_projection <- FALSE #Keep this set to false for Temporal analysis
             }
             if(si=="spatial"){ #Given the best fit model from above, now ask questions about temporal and spatial projects.
