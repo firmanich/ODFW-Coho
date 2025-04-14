@@ -1,6 +1,7 @@
 function_model_search <- function(test_years = test_years,
                                 n_years_ahead = n_years_ahead,
                                 survey_projection = survey_projection,
+                                survey_ownership_removed = NA,
                                 survey_GRTS_type = NA,
                                 survey_pop_type = NA,
                                 project = FALSE,
@@ -32,6 +33,8 @@ function_model_search <- function(test_years = test_years,
   mod_search <- list(years=test_years, 
                      form = list(rf = list(), gam=ls(), sdm=list()), 
                      args = list(rf=list(), gam=list(), sdm = list()))
+
+  print("test")
   
   rf_forms <- list(rear = list(
       m1 = formula(gsub("[\r\n\t]", "","dens ~
@@ -167,6 +170,7 @@ function_model_search <- function(test_years = test_years,
                              mtry = output$exploratory$rf$best_mtry, 
                              ntree = output$exploratory$rf$best_ntree,
                              survey_GRTS_type = survey_GRTS_type,
+                             survey_ownership_removed = survey_ownership_removed,
                              survey_pop_type = survey_pop_type)
     }
     
@@ -332,6 +336,7 @@ function_model_search <- function(test_years = test_years,
       gam_args <- expand.grid(test_years = test_years,
                               n_years_ahead = n_years_ahead,
                               mod = 1,
+                              survey_ownership_removed = survey_ownership_removed,
                               survey_GRTS_type = survey_GRTS_type,
                               survey_pop_type = survey_pop_type)
     }
@@ -342,6 +347,7 @@ function_model_search <- function(test_years = test_years,
   }
   mod_search$args$gam <- gam_args
   
+  print(gam_args)
   #sdm search
   sdm_forms <- list(rear = list(                  
                     m1 = formula(gsub("[\r\n\t]", "","dens ~ 1 +
@@ -420,6 +426,7 @@ function_model_search <- function(test_years = test_years,
                               mod = 1, 
                               sp = output$exploratory$sdm$best_sp, 
                               st = output$exploratory$sdm$best_st,
+                              survey_ownership_removed = survey_ownership_removed,
                               survey_GRTS_type = survey_GRTS_type,
                               survey_pop_type = survey_pop_type)
       

@@ -23,7 +23,7 @@ for(Stage in c('rear')){
     for(proj in c(TRUE)){ #FALSE means your just exploring. FALSE will determine which GAM, RF, GLMM model fits the data the best.
       for(mm in c('gam','sdm','rf')){ #model
         for(ss in Stage){ #life stage
-          for(si in c('temporal')){ #testing models based on survey design or temporal forecasting, **** Both can be run from 'spatial' by looping over proj <- c(TRUE,FALSE)
+          for(si in c('spatial')){ #testing models based on survey design or temporal forecasting, **** Both can be run from 'spatial' by looping over proj <- c(TRUE,FALSE)
             
             if(si =="temporal"){ #this scenario of n_years-ahead <- 0 and survey_projection <- FALSE determines the best fit model given all of the data
               n_years_ahead <- c(1) #if you're not doing PROJECTIONS, leave this at 0. This is just the exploratory phase.
@@ -34,7 +34,7 @@ for(Stage in c('rear')){
               survey_projection <- proj
             }
             
-            #load the saved output
+            #load the saved output from the original diagnostic model "wrapper_for_running_diagnostic_model.r"
             cat('\n\n')
             file <- paste0("output/",si,"_output_",ss,"_",maxYr,".rdata")
 
@@ -53,6 +53,7 @@ for(Stage in c('rear')){
                                           n_years_ahead = n_years_ahead, #predictions into the future, reduces the number of years in the training data set
                                           n_test = 5) #Number of years in the RMSE model compariso\n, if it's 5 the you're comparing 2015 through 2019
             #save the updated output
+            file <- paste0("output/",si,"_output_",ss,"_",maxYr,".rdata")
             save(output, file = file)
           }
         }

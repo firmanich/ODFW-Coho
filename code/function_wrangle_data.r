@@ -21,7 +21,12 @@ function_wrangle_data <- function(stage=NA, #life stage you're interested in
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
   juv <- juv[juv$yr<=maxYr,]
   
+  juv_ownership <- read.csv(paste0('C:/noaa/LARGE_Data/juvenile_ownership.csv'))
+  
 
+  juv <- juv %>%
+    left_join(juv_ownership, by = "SiteID", relationship = "many-to-many")
+  
   #Read in the spawner data, change AUC.Mi to dens
   # sp <- read.csv(paste0('C:/noaa/LARGE_Data/DataSpwn_2023_05_04.csv'),
   sp <- read.csv(paste0('C:/noaa/LARGE_Data/spawn_dataHR17v4.csv'),
@@ -36,6 +41,12 @@ function_wrangle_data <- function(stage=NA, #life stage you're interested in
     # filter_at(vars(UTM_E, UTM_N), all_vars(!is.na(.)))
   
   sp <- sp[sp$yr<=maxYr,]
+
+  sp_ownership <- read.csv(paste0('C:/noaa/LARGE_Data/spawner_ownership.csv'))
+  
+  
+  sp <- sp %>%
+    left_join(sp_ownership, by = "SiteID", relationship = "many-to-many")
   
   #row bind the data based on common column headings
   depVars <- c('STRM_ORDER','LifeStage','dens','yr','PopGrp','ID_Num')
@@ -72,7 +83,7 @@ function_wrangle_data <- function(stage=NA, #life stage you're interested in
   # print(dim(df))
   if(stage=="Spwn"){
     df <- bind_rows(juv,sp) %>% #Not sure why I decided to combine these and then subset
-      dplyr::select(all_of(c(depVars,coVars,'Panel','Stratum','Mainstem')))%>% #grab myVars from above
+      dplyr::select(all_of(c(depVars,coVars,'Panel','Stratum','Mainstem','Public_Owner')))%>% #grab myVars from above
       filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.))) %>% #get rid of anything without a density or UTM
       filter(LifeStage==!!stage) %>% #grab a particular life stage
       filter(Stratum!="Lakes") %>%
@@ -102,7 +113,7 @@ function_wrangle_data <- function(stage=NA, #life stage you're interested in
     # print(table(df$yr))
   }else{
     df <- bind_rows(juv,sp) %>% #Not sure why I decided to combine these and then subset
-      dplyr::select(all_of(c(depVars,coVars,'Panel','Stratum','Mainstem')))%>% #grab myVars from above
+      dplyr::select(all_of(c(depVars,coVars,'Panel','Stratum','Mainstem','Public_Owner')))%>% #grab myVars from above
       filter_at(vars(dens,UTM_E,UTM_N), all_vars(!is.na(.))) %>% #get rid of anything without a density or UTM
       filter(LifeStage==!!stage) %>% #grab a particular life stage
       filter(Stratum!="Lakes") %>% 

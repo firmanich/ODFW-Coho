@@ -3,6 +3,7 @@ function_model_exploration <- function(stage = stage,
                               no_covars = no_covars, 
                               project = project,
                               survey_projection = FALSE,
+                              survey_ownership_removed = NA,
                               survey_GRTS_type = NA,
                               survey_pop_type = NA,
                               # output = output,
@@ -73,17 +74,12 @@ function_model_exploration <- function(stage = stage,
 
       #These are all of your sampling rules
       s_i <- unlist(strsplit(search$survey_GRTS_type[[i]],split=", ",fixed=TRUE))
+      o_i <- unlist(strsplit(search$survey_ownership_removed[[i]],split=", ",fixed=TRUE))
       
       # pop_i <- unlist(strsplit(search$survey_pop_type[[i]],split=", ",fixed=TRUE))
       pop_i <- unlist(search$survey_pop_type[[i]])
       s_y <- (maxTrainYr + 1):(search$test_years[i]-search$n_years_ahead[i])
       
-      cat("\nThese are the populations that are left **OUT** of the survey years\n")
-      print(paste(t(pop_i), collapse = ","))
-      cat("\nThese are the GRTS that are left **IN** of the survey years\n")
-      print(s_i)
-      cat("\nThese are the survey years that get censored\n")
-      print(s_y)
 
       
 
@@ -92,8 +88,20 @@ function_model_exploration <- function(stage = stage,
       survey_yrs <- df %>%
         filter(yr %in% s_y) %>% #give me only the years
         filter(Panel %in% s_i) %>%#subset by panel
-        filter(!(PopGrp %in% pop_i))
-        
+        filter(!(PopGrp %in% pop_i)) %>% 
+        filter(!(Public_Owner %in% o_i)) 
+
+      cat("\nThese are the populations that are left **OUT** of the survey years\n")
+      print(paste(t(pop_i), collapse = ","))
+      cat("\nThese are the GRTS that are left **IN** of the survey years\n")
+      print(s_i)
+      cat("\nThese are the ownership that are left **out** of the survey years\n")
+      print(o_i)
+      cat("\nThese are the survey years that get censored\n")
+      print(s_y)
+      cat("\nThis is how much censored data there is \n")
+      print(dim(survey_yrs))
+      
         # cat("\n********** Years with survey rules \n",range(survey_yrs$yr),"\n\n")
         
         #combine the all data from all of the years between the RMSE years
@@ -156,8 +164,8 @@ function_model_exploration <- function(stage = stage,
         print(t(table(train$yr)))
         print("data that goes into extra argument")
         print(unique(test$yr[test$yr>max(train$yr)]))
-        print("dim test")
-        print(dim(test))
+        print("predictive years of data and the sample sizes")
+        print(table(test$yr))
         if(search$sp[i]=='off' & search$st[i]=='off'){
           myAniso <- FALSE
         }else{
@@ -178,6 +186,10 @@ function_model_exploration <- function(stage = stage,
                       warning = function(w) w)
 
         #Model prediction
+        pred <- predict(fit,
+                                 test,
+                                 re_form_iid = NA)
+        print(pred[pred$yr==search$test_years[i],])
         pred <- tryCatch(predict(fit,
                         test,
                         re_form_iid = NA),
@@ -208,7 +220,7 @@ function_model_exploration <- function(stage = stage,
         pred <- predict(fit, test)
         # print(table(train$yr))
         # print(table(test$yr))
-        # print(pred)
+        print(pred)
         search$rmse[i] = sqrt(mean(((pred-test$dens)[test$yr == search$test_years[i]])^2))
       }
 

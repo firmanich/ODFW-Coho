@@ -8,6 +8,7 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
                                 maxYr = NA,
                                 survey_projection = FALSE,
                                 survey_GRTS_type = NA,
+                                survey_ownership_removed = NA,
                                 survey_pop_type = NA,
                                 survey_pop = NA){
   #Katie and I are working on the doc.
@@ -44,18 +45,21 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
                                       no_covars = no_covars,
                                       survey_GRTS_type = survey_GRTS_type,
                                       survey_pop_type = survey_pop_type,
+                                      survey_ownership_removed = survey_ownership_removed,
                                       output = output)
   
   # print(mod_search$sdm$grid_search)
 
   #Output of model exploration
   print("run model exploration")
+  print(names(df))
   function_model_exploration(stage=stage, #Stage
                                mod=mod, #Model
                                no_covars = no_covars, #deprecated
                                project = project,
                                survey_projection = survey_projection,
-                               mod_search = mod_search,
+                             survey_ownership_removed = survey_ownership_removed,
+                             mod_search = mod_search,
                                save_output = save_output,
                                survey_GRTS_type =  survey_GRTS_type,
                              survey_pop_type = survey_pop_type,

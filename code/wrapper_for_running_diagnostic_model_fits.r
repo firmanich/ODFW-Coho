@@ -9,19 +9,22 @@ library(tidyr)
 library(dplyr)
 
 # Stage <- 'rear' #rear or Spwn
-for(Stage in c('rear')){
+for(Stage in c('rear','Spwn')){
   survey_pop_list <- list("allGrps" = c("no groups")) #These are groups that are left out
 
+  # survey_owernship_list <- list("private" = c("Private")) #These are groups that are left out
+  survey_owernship_list <- list("allOwners" = c("allOwners")) #These are groups that are left out
+  
   survey_GRTS_list <- list(
     # c("Index")
-    c("annual","annua")
-    ,c("annual","annua","three")
-    ,c("annua","annual","Index","nine","once","Supplemental","three")
+    # c("annual","annua")
+    # ,c("annual","annua","three")
+    c("annua","annual","Index","nine","once","Supplemental","three")
   )
   
   for(maxYr in c(2021)){ #The maximum year of information to use. For either spawner or adults.
-    for(proj in c(TRUE)){ #FALSE means your just exploring. FALSE will determine which GAM, RF, GLMM model fits the data the best.
-      for(mm in c('gam','sdm','rf')){ #model
+    for(proj in c(FALSE)){ #FALSE means your just exploring. FALSE will determine which GAM, RF, GLMM model fits the data the best.
+      for(mm in c('sdm','gam','rf')){ #model
         for(ss in Stage){ #life stage
           for(si in c('temporal')){ #testing models based on survey design or temporal forecasting, **** Both can be run from 'spatial' by looping over proj <- c(TRUE,FALSE)
             
@@ -49,6 +52,7 @@ for(Stage in c('rear')){
                                           stage = ss, #Which stage rear or Spwn
                                           mod = mm, # the type of model 'rf', 'gam', 'sdm'
                                           maxYr = maxYr,
+                                          survey_ownership_removed = survey_owernship_list,
                                           survey_pop = survey_pop_list,
                                           n_years_ahead = n_years_ahead, #predictions into the future, reduces the number of years in the training data set
                                           n_test = 5) #Number of years in the RMSE model compariso\n, if it's 5 the you're comparing 2015 through 2019
