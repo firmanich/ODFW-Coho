@@ -29,6 +29,7 @@ function_model_exploration <- function(stage = stage,
   search$rmse <- 1e6
   search$AIC <- 1e6
 
+  
   #The number of model forms
   nforms <- nrow(search)
 
@@ -36,14 +37,19 @@ function_model_exploration <- function(stage = stage,
   bestRMSE <- 1e6
   bestAIC <- 1e6
   
+  # print(search)
   for(i in 1:nforms){
     
     print(paste("**************", i, " out of ", nforms, "**********"))
-    print(paste(maxYr, search$n_years_ahead[i], n_test, 1))
-
-    maxTrainYr <- maxYr - search$n_years_ahead[i] - n_test + 1
+    # print("n years ahead")
+    # print(search$n_years_ahead[i])
+    maxTrainYr <- search$test_years[i] - search$n_years_ahead[i]
+    if(survey_projection){
+      maxTrainYr <- maxYr - search$n_years_ahead[i] - n_test
+    }
     
-    print(paste("max train year", maxTrainYr)) 
+    # print("max train yr")
+    # print(maxTrainYr)
     #grab the training data
     train <- dplyr::filter(df,
                           yr <= maxTrainYr) %>%
@@ -54,8 +60,12 @@ function_model_exploration <- function(stage = stage,
       with(train, order(ID_Num, yr)),
     ]
     
-    cat("\n ********* train data years with complete data \n",range(train$yr),"\n\n")
-    print(dim(train))
+    cat("\n\n")
+    print("These are the training years *************************")
+    print(range(train$yr))
+    # cat("\n ********* train data years with complete data \n",range(train$yr),"\n\n")
+    # print("dim train")
+    # print(dim(train))
 
 
     if(survey_projection){
@@ -66,7 +76,7 @@ function_model_exploration <- function(stage = stage,
       
       # pop_i <- unlist(strsplit(search$survey_pop_type[[i]],split=", ",fixed=TRUE))
       pop_i <- unlist(search$survey_pop_type[[i]])
-      s_y <- (maxTrainYr+1):(search$test_years[i]-search$n_years_ahead[i])
+      s_y <- (maxTrainYr + 1):(search$test_years[i]-search$n_years_ahead[i])
       
       cat("\nThese are the populations that are left **OUT** of the survey years\n")
       print(paste(t(pop_i), collapse = ","))
@@ -84,14 +94,14 @@ function_model_exploration <- function(stage = stage,
         filter(Panel %in% s_i) %>%#subset by panel
         filter(!(PopGrp %in% pop_i))
         
-        cat("\n********** Years with survey rules \n",range(survey_yrs$yr),"\n\n")
+        # cat("\n********** Years with survey rules \n",range(survey_yrs$yr),"\n\n")
         
         #combine the all data from all of the years between the RMSE years
         #with only the survey from RMSE years.
         train <- rbind(train,
                        survey_yrs)
         
-        cat(" ********** this is the train data combined with the survey data that has rules \n", range(train$yr),"\n\n")
+        cat("\n********** This is the range of years with train data combined with the survey data that has rules \n", range(train$yr),"\n\n")
         # train$fYr <- as.factor(train$yr)
         # train <- train[with(train, order(ID_Num, yr)),]
         
@@ -99,9 +109,14 @@ function_model_exploration <- function(stage = stage,
     
     #Grab the test year: either the last year of the training data or projection year    
     if(!project){
+      
       test <- dplyr::filter(df, yr == search$test_years[i]) %>%
         dplyr::mutate(fYr = as.factor(yr))
+      cat("\nThese are the number of observations and survey years that get predicted ", n_years_ahead, " n year ahead")
+      print(table(test$yr))
+      cat("\n\n")
     }
+    
     if(project){
       #Test data based  on the number of projection years
       # test <- dplyr::filter(df, yr %in% (search$test_years[i] - search$n_years_ahead[i]):search$test_years[i]) %>%
@@ -141,8 +156,8 @@ function_model_exploration <- function(stage = stage,
         print(t(table(train$yr)))
         print("data that goes into extra argument")
         print(unique(test$yr[test$yr>max(train$yr)]))
-        
-        print("sdm")
+        print("dim test")
+        print(dim(test))
         if(search$sp[i]=='off' & search$st[i]=='off'){
           myAniso <- FALSE
         }else{
@@ -199,8 +214,9 @@ function_model_exploration <- function(stage = stage,
 
       if(mod=='gam'){
         # print(best_mod_frm)
-        print(range(train$yr))
-        print(range(test$yr))
+        # print("train------")
+        # print(range(train$yr))
+        # print(range(test$yr))
         tmp_test <- test 
         tmp_test$dens <- NA
         #Refit the best model with the training data. You have to refit to each new training data set
@@ -222,6 +238,10 @@ function_model_exploration <- function(stage = stage,
 
       if(mod=="rf"){
         #Fit the data
+        # print("test year")
+        # print(range(test$yr))
+        # print("dim test")
+        # print(dim(test))
         if(search$mtry[i]<=length(attr(terms(mod_frm),"term.labels"))){
           fit = randomForest(mod_frm,
                            mtry = search$mtry[i],
@@ -236,6 +256,10 @@ function_model_exploration <- function(stage = stage,
       }
 
       if(mod=="sdm"){
+        # print("test year")
+        # print(range(test$yr))
+        # print("dim test")
+        # print(dim(test))
         if(search$sp[i]=='off' & search$st[i]=='off'){
           myAniso <- FALSE
         }else{
@@ -267,8 +291,10 @@ function_model_exploration <- function(stage = stage,
       }
 
       if(mod=="gam"){
-        print(range(train$yr))
-        print(names(train))
+        # print("test year")
+        # print(range(test$yr))
+        # print("dim test")
+        # print(dim(test))
         fit <-  gam(mod_frm, data=train, family = "tw")
         pred <- predict(fit,test)
         search$rmse[i] <- sqrt(mean((exp(pred)-test$dens)^2))

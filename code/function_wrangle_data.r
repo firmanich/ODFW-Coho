@@ -97,9 +97,9 @@ function_wrangle_data <- function(stage=NA, #life stage you're interested in
              maxtemp07da1_Fall = scale_this(maxtemp07da1_Fall)
              
       )
-    print("test dim")
-    print(dim(df))
-    print(table(df$yr))
+    # print("test dim")
+    # print(dim(df))
+    # print(table(df$yr))
   }else{
     df <- bind_rows(juv,sp) %>% #Not sure why I decided to combine these and then subset
       dplyr::select(all_of(c(depVars,coVars,'Panel','Stratum','Mainstem')))%>% #grab myVars from above
@@ -137,7 +137,7 @@ function_wrangle_data <- function(stage=NA, #life stage you're interested in
     drop_na()#Necessary to get Spwn data to work.
   # print(paste("df dim after NA removed",dim(df)))
   
-  print(table(df$Panel))
+  # print(table(df$Panel))
   return(df)
   
 }

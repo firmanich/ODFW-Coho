@@ -15,8 +15,9 @@ sp <- output$exploratory$sdm$best_sp
 #Spwn_All_pops_RMSE.png, in the script
 high_rivers_Spwn <- c("Coos", "Siuslaw", 'Lower Umpqua', 'Siletz', "Beaver")
 low_rivers_Spwn <- c("Necanium", "Siltcoos", 'Tahkenitch', 'Tenmile', "North Umpqua")
-Spwn_list <- list(high_RMSE_rivers = high_rivers_Spwn,
-                  low_RMSE_rivers = low_rivers_Spwn,
+all_GRTS <- 
+Spwn_list <- list(#high_RMSE_rivers = high_rivers_Spwn,
+                  #low_RMSE_rivers = low_rivers_Spwn,
                   all_rivers = unique(obs_data$PopGrp))
 Panel_list <- list(all_panels = unique(obs_data$Panel),
                    all_panels = unique(obs_data$Panel),
@@ -141,9 +142,9 @@ if(recreate_analysis){
       }
     }
   }
-  saveRDS(out, "output/Figure_8_Spwn.rds")
+  # saveRDS(out, "output/Figure_8_Spwn.rds")
 }else{
-  out <- readRDS("output/Figure_8_Spwn.rds")
+  # out <- readRDS("output/Figure_8_Spwn.rds")
 }
 
 list_num <- 2

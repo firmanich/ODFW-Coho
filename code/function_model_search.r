@@ -172,7 +172,7 @@ function_model_search <- function(test_years = test_years,
     
   }else{
     rf_args <- expand.grid(test_years = test_years,
-                           n_years_ahead = 0,
+                           n_years_ahead = n_years_ahead,
                            mod = 1:length(rf_forms[[1]]), 
                            mtry = c(3,5,7,9,11), 
                            ntree = seq(200,1000,200))
@@ -337,7 +337,7 @@ function_model_search <- function(test_years = test_years,
     }
   }else{
     gam_args <- expand.grid(test_years = test_years,
-                            n_years_ahead = 0, #for the exploration you don't project into the future
+                            n_years_ahead = n_years_ahead, #for the exploration you don't project into the future
                             mod = 1:length(gam_forms[[1]]))#doesn't matter if it's the rear or spwn dimension
   }
   mod_search$args$gam <- gam_args
@@ -426,7 +426,7 @@ function_model_search <- function(test_years = test_years,
     }
   }else{
     sdm_args <- expand.grid(test_years = test_years,
-                            n_years_ahead = 0,
+                            n_years_ahead = n_years_ahead,
                             mod = 1:length(sdm_forms[[1]]), #spawners and juv have the same lengths
                             sp = c('on',"off"), #c(TRUE,FALSE), 
                             st = c('iid',"off") #c("iid",FALSE)

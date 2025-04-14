@@ -27,8 +27,8 @@ function_run_models <- function(project = FALSE, #This is whether you want to pr
                               dir = root,
                               maxYr = maxYr)
 
-  print(names(df))
-  print(table(df$survey_GRTS_type))
+  # print(names(df))
+  # print(table(df$survey_GRTS_type))
   #These are the tested years, as opposed to the training years
   test_years = seq(max(df$yr)-n_test+1, max(df$yr))
 
